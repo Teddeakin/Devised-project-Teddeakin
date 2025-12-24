@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home page</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <script src="main.js" defer></script>
+</head>
+<body>
+    <h1>
+        home page
+    </h1>
+    <button id="press-me">Press me!</button>
+    
+    <h2>
+        send us a comment
+    </h2>
+    <form action="/add-comment" method="post">
+        <label for="email-box">Email: </label>
+        <input type="email" name="user-email" id="email-box">
+        
+        <label for="comment-box">Write us a comment</label>
+        <input type="text" name="comment" id="comment-box">
+        
+        <label for="super-box">Would you like this to be a super comment</label>
+        <input type="checkbox" name="super-comment" id="super-box">
+
+        <input type="submit" value="Send!">
+    </form>
+</body>
+</html>
