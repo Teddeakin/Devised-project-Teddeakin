@@ -40,7 +40,9 @@ app.get("/api/steam/games/:steamId", async (req, res) => {
         res.json(data);
     } catch (err) {
         console.error(err.message);
-        res.status(500).json({ error: "Failed to fetch owned games" });
+        res.status(500).json({
+            error: "Failed to fetch owned games"
+        });
     }
 });
 
@@ -49,24 +51,32 @@ async function getPlayerSummary(steamId) {
 
     const response = await axios.get(url, {
         params: {
-            key: "FAD844C3BB76FAA2E1682BD0EC145303", 
+            key: "FAD844C3BB76FAA2E1682BD0EC145303",
             steamids: steamId
         }
     });
 
-    console.log("Steam API data:");
-    console.log(response.data.response.players[0]);
+    const player = response.data?.response?.players?.[0];
 
-    return response.data.response.players[0];
+    return player || null;
 }
 
 app.get("/api/steam/profile/:steamId", async (req, res) => {
     try {
         const data = await getPlayerSummary(req.params.steamId);
+
+        if (!data) {
+            return res.status(404).json({
+                error: "Profile not found or private"
+            });
+        }
+
         res.json(data);
     } catch (err) {
         console.error(err.message);
-        res.status(500).json({ error: "Failed to fetch Steam data" });
+        res.status(500).json({
+            error: "Failed to fetch Steam profile"
+        });
     }
 });
 

@@ -9,7 +9,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "axios": "^1.13.2",
-    "express": "^5.2.1"
+    "axios": "^1.13.4",
+    "cheerio": "^1.2.0",
+    "express": "^5.2.1",
+    "psn-api": "^2.17.0"
   }
 }
