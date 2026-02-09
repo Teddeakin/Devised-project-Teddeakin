@@ -139,7 +139,12 @@ app.get("/api/xbox/profile/:gamertag", async (req, res) => {
         }
 
         const profile = await getXboxProfileByXuid(xuid);
-        res.json(profile);
+
+        res.json({
+            xuid,          
+            profile
+        });
+
     } catch (err) {
         console.error(err.response?.data || err.message);
         res.status(500).json({ error: "Failed to fetch Xbox profile" });
