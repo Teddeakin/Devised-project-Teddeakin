@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,26 +8,37 @@
     <link rel="stylesheet" href="styles/main.css">
     <script src="main.js" defer></script>
 </head>
+
 <body>
-    <h1>
-        account input
-    </h1>
-    
-    <h2>
-        Steam input
-    </h2>
+    <header>
+        <h1>
+            account input
+        </h1>
+    </header>
 
-    <input type="text" id="SteamIdInput" placeholder="Enter SteamID64">
-    <button id="SteamSearchBtn">Search steam</button>
+    <main>
+        <section class="Steam">
+            <h2>
+                Steam input
+            </h2>
 
-    <p id="Steam-info"> </p>
+            <input type="text" id="SteamIdInput" placeholder="Enter SteamID64">
+            <button id="SteamSearchBtn">Search steam</button>
 
-    <h2>
-        Xbox input
-    </h2>
+            <p id="Steam-info"> </p>
+        </section>
+        <section class="Xbox">
+            <h2>
+                Xbox input
+            </h2>
 
-    <input type="text" id="XboxGamertagInput" placeholder="Enter Xbox">
-    <button id="XboxSearchBtn">Search xbox</button>
+            <input type="text" id="XboxGamertagInput" placeholder="Enter Xbox">
+            <button id="XboxSearchBtn">Search xbox</button>
+
+            <p id="Xbox-info"> </p>
+        </section>
+    </main>
 
 </body>
+
 </html>

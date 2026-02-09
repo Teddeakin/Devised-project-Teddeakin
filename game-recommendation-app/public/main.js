@@ -1,3 +1,14 @@
+const appData = {
+    steam: {
+        profile: null,
+        games: []
+    },
+    xbox: {
+        profile: null,
+        games: []
+    }
+};
+
 // Steam --------------------------------------------------
 
 const SteamButton = document.getElementById("SteamSearchBtn");
@@ -27,6 +38,15 @@ SteamButton.addEventListener("click", async () => {
 
         const Steam_Games_Data = await fetchJSON(`/api/steam/games/${steamId}`);
         console.log("Owned games:", Steam_Games_Data);
+
+        appData.steam.profile = Steam_Profile_Data;
+        appData.steam.games = Steam_Games_Data.games.map(game => game.name);
+
+        console.log("start")
+        console.log(appData.steam.games);
+        console.log("end")
+
+        document.getElementById("Steam-info").innerHTML = appData.steam.games;
 
     } catch (err) {
         console.error("Error fetching Steam data:", err.message);
@@ -67,6 +87,11 @@ XboxButton.addEventListener("click", async () => {
 
         const Xboxgames = await fetchJSON(`/api/xbox/game-names/${Xbox_Profile_Data.xuid}`);
         console.log("Xbox games owned: ", Xboxgames);
+
+        appData.xbox.profile = Xbox_Profile_Data;
+        appData.xbox.games = Xboxgames;
+
+        document.getElementById("Xbox-info").innerHTML = JSON.stringify(Xboxgames);
 
     } catch (err) {
         console.error("Error fetching Xbox data:", err.message);
