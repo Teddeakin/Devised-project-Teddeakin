@@ -2,7 +2,7 @@ const express = require("express");
 const axios = require("axios");
 
 const app = express();
-app.use(express.urlencoded({extended: false}));
+app.use(express.urlencoded({ extended: false }));
 app.listen(3000, () => console.log("Listening on http://localhost:3000"));
 
 app.use(express.static("./public"));
@@ -129,7 +129,7 @@ app.get("/api/xbox/profile/:gamertag", async (req, res) => {
         const profile = await getXboxProfileByXuid(xuid);
 
         res.json({
-            xuid,          
+            xuid,
             profile
         });
 
@@ -200,11 +200,9 @@ app.get("/api/xbox/game-names/:xuid", async (req, res) => {
 
 let psnApi;
 
-
 async function loadPsnApi() {
     if (!psnApi) {
-        const mod = await import("psn-api");
-        psnApi = mod.default ?? mod;
+        psnApi = await import("psn-api");
     }
     return psnApi;
 }
@@ -213,62 +211,83 @@ async function psnLogin(npsso) {
     const psn = await loadPsnApi();
 
     const accessCode = await psn.exchangeNpssoForAccessCode(npsso);
-
     const tokens = await psn.exchangeCodeForAccessToken(accessCode);
 
     return tokens.accessToken;
 }
 
-async function getPlayStationGames(accessToken) {
+async function getAccountId(accessToken, username) {
+    const psn = await loadPsnApi();
+
+    const result = await psn.makeUniversalSearch(
+        { accessToken },
+        username,
+        "SocialAllAccounts"
+    );
+
+    const domain = result.domainResponses?.[0];
+
+    if (!domain?.results?.length) {
+        throw new Error("User not found");
+    }
+
+    return domain.results[0].socialMetadata.accountId;
+}
+
+
+async function getUserPlayStationGames(accessToken, accountId) {
     const psn = await loadPsnApi();
 
     let allGames = [];
     let offset = 0;
-    const limit = 100; 
+    const limit = 100;
 
     while (true) {
         const response = await psn.getUserPlayedGames(
             { accessToken },
-            "me",
-            {
-                limit,
-                offset
-            }
+            accountId,
+            { limit, offset }
         );
 
         const games = response.titles ?? [];
         allGames.push(...games);
 
-        if (!response.nextOffset) {
-            break; 
-        }
+        if (!response.nextOffset) break;
 
         offset = response.nextOffset;
     }
 
-    console.log("TOTAL GAMES:", allGames.length);
-
-    return allGames.map(game => ({
-        name: game.name,
-        platform: game.category,
-        playtime: game.playDuration,
-        lastPlayed: game.lastPlayedDateTime
-    }));
+    return allGames
+        .map(game => ({
+            name: game.name,
+            platform: game.category,
+            playtime: game.playDuration,
+            lastPlayed: game.lastPlayedDateTime
+        }));
 }
 
 
 
 
-const TEST_NPSSO = "thK059KEyNuQQsc241wzIuVUGsFlC9U14V6nbnxPF0IYJ9LvYZ501382Aa75Opoy";
+const TEST_NPSSO = "xL33nLA5qsWsO1PoNkzYrzmL5dmwjbnyb5A7GWpxraNxEOoXORZTiXt96nKoPaaw";
 
 
-app.get("/api/playstation/test", async (req, res) => {
+app.get("/api/playstation/games/:username", async (req, res) => {
     try {
         const accessToken = await psnLogin(TEST_NPSSO);
-        const games = await getPlayStationGames(accessToken);
 
+        const accountId = await getAccountId(
+            accessToken,
+            req.params.username
+        );
+
+        const games = await getUserPlayStationGames(
+            accessToken,
+            accountId
+        );
 
         res.json({ games });
+
     } catch (err) {
         console.error("PSN ERROR:", err);
         res.status(500).json({ error: err.message });
