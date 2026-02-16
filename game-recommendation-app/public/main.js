@@ -6,6 +6,10 @@ const appData = {
     xbox: {
         profile: null,
         games: []
+    },
+    playstation: {
+        profile: null,
+        games: []
     }
 };
 
@@ -92,3 +96,39 @@ XboxButton.addEventListener("click", async () => {
     }
 }
 )
+
+// Playstation --------------------------------------------------
+
+const PlaystationButton = document.getElementById("PlaystationSearchBtn");
+const PlaystationInput = document.getElementById("PlaystationUserIdInput");
+
+async function fetchJSON(url) {
+    const res = await fetch(url);
+
+    if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`);
+    }
+
+    return res.json();
+}
+
+PlaystationButton.addEventListener("click", async () => {
+    const PlaystationId = PlaystationInput.value.trim();
+
+    if (!PlaystationInput) {
+        console.log("No SteamID entered");
+        return;
+    }
+
+    try {
+        const Playstation_Games_Data = await fetchJSON(`/api/playstation/games/${PlaystationId}`);
+        console.log("Owned games:", Playstation_Games_Data);
+
+        appData.playstation.games = Playstation_Games_Data.games.map(game => game.name);
+
+        document.getElementById("Playstation-info").innerHTML = appData.playstation.games;
+
+    } catch (err) {
+        console.error("Error fetching Steam data:", err.message);
+    }
+});
