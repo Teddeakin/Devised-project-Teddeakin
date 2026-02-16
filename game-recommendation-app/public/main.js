@@ -42,10 +42,6 @@ SteamButton.addEventListener("click", async () => {
         appData.steam.profile = Steam_Profile_Data;
         appData.steam.games = Steam_Games_Data.games.map(game => game.name);
 
-        console.log("start")
-        console.log(appData.steam.games);
-        console.log("end")
-
         document.getElementById("Steam-info").innerHTML = appData.steam.games;
 
     } catch (err) {
@@ -79,9 +75,7 @@ XboxButton.addEventListener("click", async () => {
     }
 
     try {
-        const Xbox_Profile_Data = await fetchJSON(
-            `/api/xbox/profile/${encodeURIComponent(gamertag)}`
-        );
+        const Xbox_Profile_Data = await fetchJSON(`/api/xbox/profile/${encodeURIComponent(gamertag)}`);
 
         console.log("Xbox profile: ", Xbox_Profile_Data);
 

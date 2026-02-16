@@ -7,6 +7,7 @@ app.listen(3000, () => console.log("Listening on http://localhost:3000"));
 
 app.use(express.static("./public"));
 
+// Steam -------------------------------------------------------------------------------------
 
 async function getOwnedGames(steamId) {
     const url = "https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/";
@@ -80,20 +81,7 @@ app.get("/api/steam/profile/:steamId", async (req, res) => {
     }
 });
 
-// async function getXboxProfile(gamertag) {
-//     const response = await axios.get(`https://xbl.io/api/v2/account/${gamertag}`,
-//         {
-//             headers: {
-//                 "X-Authorization": "4310de90-7e34-4285-801f-d424c90a9799"
-//             }
-//         }
-//     );
-
-//     console.log("Xbox profile:");
-//     console.log(response.data);
-
-//     return response.data;
-// }
+// Xbox ---------------------------------------------------------------------------------
 
 async function searchXboxUser(gamertag) {
     const response = await axios.get(
@@ -204,5 +192,85 @@ app.get("/api/xbox/game-names/:xuid", async (req, res) => {
     } catch (err) {
         console.error(err.response?.data || err.message);
         res.status(500).json({ error: "Failed to fetch game names" });
+    }
+});
+
+
+// Playstation ---------------------------------------------------------------------------
+
+let psnApi;
+
+
+async function loadPsnApi() {
+    if (!psnApi) {
+        const mod = await import("psn-api");
+        psnApi = mod.default ?? mod;
+    }
+    return psnApi;
+}
+
+async function psnLogin(npsso) {
+    const psn = await loadPsnApi();
+
+    const accessCode = await psn.exchangeNpssoForAccessCode(npsso);
+
+    const tokens = await psn.exchangeCodeForAccessToken(accessCode);
+
+    return tokens.accessToken;
+}
+
+async function getPlayStationGames(accessToken) {
+    const psn = await loadPsnApi();
+
+    let allGames = [];
+    let offset = 0;
+    const limit = 100; 
+
+    while (true) {
+        const response = await psn.getUserPlayedGames(
+            { accessToken },
+            "me",
+            {
+                limit,
+                offset
+            }
+        );
+
+        const games = response.titles ?? [];
+        allGames.push(...games);
+
+        if (!response.nextOffset) {
+            break; 
+        }
+
+        offset = response.nextOffset;
+    }
+
+    console.log("TOTAL GAMES:", allGames.length);
+
+    return allGames.map(game => ({
+        name: game.name,
+        platform: game.category,
+        playtime: game.playDuration,
+        lastPlayed: game.lastPlayedDateTime
+    }));
+}
+
+
+
+
+const TEST_NPSSO = "thK059KEyNuQQsc241wzIuVUGsFlC9U14V6nbnxPF0IYJ9LvYZ501382Aa75Opoy";
+
+
+app.get("/api/playstation/test", async (req, res) => {
+    try {
+        const accessToken = await psnLogin(TEST_NPSSO);
+        const games = await getPlayStationGames(accessToken);
+
+
+        res.json({ games });
+    } catch (err) {
+        console.error("PSN ERROR:", err);
+        res.status(500).json({ error: err.message });
     }
 });
