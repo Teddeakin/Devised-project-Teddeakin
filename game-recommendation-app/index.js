@@ -258,6 +258,7 @@ async function getUserPlayStationGames(accessToken, accountId) {
     }
 
     return allGames
+        .filter(game => game.category.includes("game"))
         .map(game => ({
             name: game.name,
             platform: game.category,
