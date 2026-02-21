@@ -13,6 +13,26 @@ const appData = {
     }
 };
 
+const savedData = localStorage.getItem("appData");
+
+if (savedData) {
+    const parsed = JSON.parse(savedData);
+
+    Object.assign(appData, parsed);
+
+    if (appData.steam.games.length) {
+        document.getElementById("Steam-info").innerHTML = appData.steam.games;
+    }
+
+    if (appData.xbox.games.length) {
+        document.getElementById("Xbox-info").innerHTML = JSON.stringify(appData.xbox.games);
+    }
+
+    if (appData.playstation.games.length) {
+        document.getElementById("Playstation-info").innerHTML = appData.playstation.games;
+    }
+}
+
 // Steam --------------------------------------------------
 
 const SteamButton = document.getElementById("SteamSearchBtn");
@@ -45,6 +65,8 @@ SteamButton.addEventListener("click", async () => {
 
         appData.steam.profile = Steam_Profile_Data;
         appData.steam.games = Steam_Games_Data.games.map(game => game.name);
+
+        localStorage.setItem("appData", JSON.stringify(appData));
 
         document.getElementById("Steam-info").innerHTML = appData.steam.games;
 
@@ -89,6 +111,8 @@ XboxButton.addEventListener("click", async () => {
         appData.xbox.profile = Xbox_Profile_Data;
         appData.xbox.games = Xboxgames;
 
+        localStorage.setItem("appData", JSON.stringify(appData));
+
         document.getElementById("Xbox-info").innerHTML = JSON.stringify(Xboxgames);
 
     } catch (err) {
@@ -125,6 +149,8 @@ PlaystationButton.addEventListener("click", async () => {
         console.log("Owned games:", Playstation_Games_Data);
 
         appData.playstation.games = Playstation_Games_Data.games.map(game => game.name);
+
+        localStorage.setItem("appData", JSON.stringify(appData));
 
         document.getElementById("Playstation-info").innerHTML = appData.playstation.games;
 

@@ -270,12 +270,12 @@ async function getUserPlayStationGames(accessToken, accountId) {
 
 
 
-const TEST_NPSSO = "xL33nLA5qsWsO1PoNkzYrzmL5dmwjbnyb5A7GWpxraNxEOoXORZTiXt96nKoPaaw";
+const NPSSO = "xL33nLA5qsWsO1PoNkzYrzmL5dmwjbnyb5A7GWpxraNxEOoXORZTiXt96nKoPaaw";
 
 
 app.get("/api/playstation/games/:username", async (req, res) => {
     try {
-        const accessToken = await psnLogin(TEST_NPSSO);
+        const accessToken = await psnLogin(NPSSO);
 
         const accountId = await getAccountId(
             accessToken,
