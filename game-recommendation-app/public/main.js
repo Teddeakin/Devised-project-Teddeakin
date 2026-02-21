@@ -38,6 +38,8 @@ if (savedData) {
 const SteamButton = document.getElementById("SteamSearchBtn");
 const SteamInput = document.getElementById("SteamIdInput");
 
+SteamInput.value = localStorage.getItem("steamId") || "";
+
 async function fetchJSON(url) {
     const res = await fetch(url);
 
@@ -56,7 +58,10 @@ SteamButton.addEventListener("click", async () => {
         return;
     }
 
+    localStorage.setItem("steamId", steamId);
+
     try {
+
         const Steam_Profile_Data = await fetchJSON(`/api/steam/profile/${steamId}`);
         console.log("Profile data:", Steam_Profile_Data);
 
@@ -80,6 +85,8 @@ SteamButton.addEventListener("click", async () => {
 const XboxButton = document.getElementById("XboxSearchBtn");
 const XboxInput = document.getElementById("XboxGamertagInput");
 
+XboxInput.value = localStorage.getItem("gamertag") || "";
+
 async function fetchJSON(url) {
     const res = await fetch(url);
 
@@ -101,6 +108,9 @@ XboxButton.addEventListener("click", async () => {
     }
 
     try {
+
+        localStorage.setItem("gamertag", gamertag);
+
         const Xbox_Profile_Data = await fetchJSON(`/api/xbox/profile/${encodeURIComponent(gamertag)}`);
 
         console.log("Xbox profile: ", Xbox_Profile_Data);
@@ -126,6 +136,8 @@ XboxButton.addEventListener("click", async () => {
 const PlaystationButton = document.getElementById("PlaystationSearchBtn");
 const PlaystationInput = document.getElementById("PlaystationUserIdInput");
 
+PlaystationInput.value = localStorage.getItem("PlaystationId") || "";
+
 async function fetchJSON(url) {
     const res = await fetch(url);
 
@@ -145,6 +157,9 @@ PlaystationButton.addEventListener("click", async () => {
     }
 
     try {
+
+        localStorage.setItem("PlaystationId", PlaystationId);
+
         const Playstation_Games_Data = await fetchJSON(`/api/playstation/games/${PlaystationId}`);
         console.log("Owned games:", Playstation_Games_Data);
 
