@@ -189,3 +189,63 @@ PlaystationButton.addEventListener("click", async () => {
     }
 });
 
+// merging data ---------------------------------------------------
+
+function mergeAllGames() {
+    const allGames = [
+        ...appData.steam.games,
+        ...appData.xbox.games,
+        ...appData.playstation.games
+    ];
+
+    const mergedMap = new Map();
+
+    for (const game of allGames) {
+
+        const name = game.name.trim().toLowerCase();
+
+        let hours = 0;
+
+        if (game.playtimeHours) {
+            hours = parseFloat(game.playtimeHours);
+        } else if (game.playtime) {
+            // console.log(game.playtime.match(/(\d+)H/)) || [0,0][1];
+            const h = game.playtime.match(/(\d+)H/);
+            const m = game.playtime.match(/(\d+)M/);
+            const s = game.playtime.match(/(\d+)S/);
+
+            const hoursNum = h ? parseInt(h[1]) : 0;
+            const minutesNum = m ? parseInt(m[1]) : 0;
+            const secondsNum = s ? parseInt(s[1]) : 0;
+
+            hours = hoursNum + minutesNum / 60 + secondsNum / 3600;
+        } else if (game.playtimeMinutes) {
+            hours = game.playtimeMinutes / 60;
+        }
+
+        if (mergedMap.has(name)) {
+            mergedMap.get(name).hours += hours;
+        } else {
+            mergedMap.set(name, {
+                name: game.name,
+                hours: hours
+            });
+        }
+        // console.log(game.name, game.playtime);
+    }
+
+    return Array.from(mergedMap.values());
+}
+
+const mergeButton = document.getElementById("MergeGamesBtn");
+
+mergeButton.addEventListener("click", () => {
+
+    const mergedGames = mergeAllGames();
+
+    document.getElementById("Merged-info").innerHTML =
+        mergedGames
+            .map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`)
+            .join("<br>");
+
+});
