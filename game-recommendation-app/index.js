@@ -107,7 +107,7 @@ async function getXboxProfileByXuid(xuid) {
         `https://xbl.io/api/v2/account/${xuid}`,
         {
             headers: {
-                "X-Authorization": "c005e453-5d6e-42a1-bdd6-db77b821800a"
+                "X-Authorization": "22b72ce9-0cda-406e-a17d-9d06af8e6350"
             }
         }
     );
@@ -167,23 +167,40 @@ app.get("/api/xbox/profile/:gamertag", async (req, res) => {
 // });
 
 // function for just the names of games owned - xbox
+
 async function getXboxGameNames(xuid) {
     const response = await axios.get(
-        `https://xbl.io/api/v2/achievements/player/${xuid}`,
+        `https://xbl.io/api/v2/player/titleHistory/${xuid}`,
         {
             headers: {
-                "X-Authorization": "c005e453-5d6e-42a1-bdd6-db77b821800a"
+                "X-Authorization": "22b72ce9-0cda-406e-a17d-9d06af8e6350"
             }
         }
     );
 
-    const names = response.data.titles.map(title => title.name);
+    console.log("FULL Xbox title history response:");
+    console.log(JSON.stringify(response.data, null, 2));
 
-    console.log("Xbox game names:");
-    console.log(names);
-
-    return names;
+    return response.data.titles?.map(title => title.name) || [];
 }
+
+// async function getXboxGameNames(xuid) {
+//     const response = await axios.get(
+//         `https://xbl.io/api/v2/achievements/player/${xuid}`,
+//         {
+//             headers: {
+//                 "X-Authorization": "c005e453-5d6e-42a1-bdd6-db77b821800a"
+//             }
+//         }
+//     );
+
+//     const names = response.data.titles.map(title => title.name);
+
+//     console.log("Xbox game names:");
+//     console.log(names);
+
+//     return names;
+// }
 
 app.get("/api/xbox/game-names/:xuid", async (req, res) => {
     try {
@@ -294,3 +311,7 @@ app.get("/api/playstation/games/:username", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+
+// normalisation ------------------------------------------------------------------------
+

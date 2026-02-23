@@ -21,15 +21,15 @@ if (savedData) {
     Object.assign(appData, parsed);
 
     if (appData.steam.games.length) {
-        document.getElementById("Steam-info").innerHTML = appData.steam.games;
+        document.getElementById("Steam-info").innerHTML = appData.steam.games.map(game => `${game.name} - ${game.playtimeHours} hrs`) .join("<br>");
     }
 
-    if (appData.xbox.games.length) {
-        document.getElementById("Xbox-info").innerHTML = JSON.stringify(appData.xbox.games);
-    }
+    // if (appData.xbox.games.length) {
+    //     document.getElementById("Xbox-info").innerHTML = JSON.stringify(appData.xbox.games);
+    // }
 
     if (appData.playstation.games.length) {
-        document.getElementById("Playstation-info").innerHTML = appData.playstation.games;
+        document.getElementById("Playstation-info").innerHTML = appData.playstation.games .map(game => `${game.name} - ${game.playtime}`) .join("<br>");;
     }
 }
 
@@ -37,6 +37,7 @@ if (savedData) {
 
 const SteamButton = document.getElementById("SteamSearchBtn");
 const SteamInput = document.getElementById("SteamIdInput");
+const SteamDelete = document.getElementById("SteamDeleteBtn");
 
 SteamInput.value = localStorage.getItem("steamId") || "";
 
@@ -69,15 +70,23 @@ SteamButton.addEventListener("click", async () => {
         console.log("Owned games:", Steam_Games_Data);
 
         appData.steam.profile = Steam_Profile_Data;
-        appData.steam.games = Steam_Games_Data.games.map(game => game.name);
+        appData.steam.games = Steam_Games_Data.games.map(game => ({
+            name: game.name, 
+            appid: game.appid, 
+            playtimeHours: (game.playtime_forever / 60).toFixed(1)
+        }));
 
         localStorage.setItem("appData", JSON.stringify(appData));
 
-        document.getElementById("Steam-info").innerHTML = appData.steam.games;
+        document.getElementById("Steam-info").innerHTML = appData.steam.games.map(game => `${game.name} - ${game.playtimeHours} hrs`) .join("<br>");
 
     } catch (err) {
         console.error("Error fetching Steam data:", err.message);
     }
+});
+
+SteamDelete.addEventListener("click", async () => {
+
 });
 
 // Xbox -----------------------------------------------
@@ -100,6 +109,7 @@ async function fetchJSON(url) {
 }
 
 XboxButton.addEventListener("click", async () => {
+    console.log("searching");
     const gamertag = XboxInput.value.trim();
 
     if (!gamertag) {
@@ -120,6 +130,8 @@ XboxButton.addEventListener("click", async () => {
 
         appData.xbox.profile = Xbox_Profile_Data;
         appData.xbox.games = Xboxgames;
+
+        console.log("Xboxgames")
 
         localStorage.setItem("appData", JSON.stringify(appData));
 
@@ -163,13 +175,17 @@ PlaystationButton.addEventListener("click", async () => {
         const Playstation_Games_Data = await fetchJSON(`/api/playstation/games/${PlaystationId}`);
         console.log("Owned games:", Playstation_Games_Data);
 
-        appData.playstation.games = Playstation_Games_Data.games.map(game => game.name);
+        appData.playstation.games = Playstation_Games_Data.games.map(game => ({
+            name: game.name,
+            playtime: game.playtime || "0h" 
+        }));
 
         localStorage.setItem("appData", JSON.stringify(appData));
 
-        document.getElementById("Playstation-info").innerHTML = appData.playstation.games;
+        document.getElementById("Playstation-info").innerHTML = appData.playstation.games .map(game => `${game.name} - ${game.playtime}`) .join("<br>");
 
     } catch (err) {
         console.error("Error fetching Steam data:", err.message);
     }
 });
+
