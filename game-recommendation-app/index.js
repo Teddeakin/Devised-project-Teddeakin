@@ -5,6 +5,8 @@ const app = express();
 app.use(express.urlencoded({ extended: false }));
 app.listen(3000, () => console.log("Listening on http://localhost:3000"));
 
+app.use(express.json());
+
 app.use(express.static("./public"));
 
 // Steam -------------------------------------------------------------------------------------
@@ -310,4 +312,47 @@ app.get("/api/playstation/games/:username", async (req, res) => {
         console.error("PSN ERROR:", err);
         res.status(500).json({ error: err.message });
     }
+});
+
+
+// Python -----------------------------------------------------------------
+
+
+const { spawn } = require("child_process");
+
+app.post("/api/run-algorithm", (req, res) => {
+
+    const python = spawn("python", ["public/algorithm.py"]);
+
+    let result = "";
+    let error = "";
+
+    // Send JSON to Python
+    python.stdin.write(JSON.stringify(req.body));
+    python.stdin.end();
+
+    // Collect output
+    python.stdout.on("data", (data) => {
+        result += data.toString();
+    });
+
+    python.stderr.on("data", (data) => {
+        error += data.toString();
+    });
+
+    python.on("close", (code) => {
+
+        if (code !== 0) {
+            console.error("Python exited with error:", error);
+            return res.status(500).json({ error: "Python failed" });
+        }
+
+        try {
+            const parsed = JSON.parse(result);
+            res.json(parsed);
+        } catch (err) {
+            console.error("Invalid JSON from Python:", result);
+            res.status(500).json({ error: "Invalid response from Python" });
+        }
+    });
 });

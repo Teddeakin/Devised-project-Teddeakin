@@ -250,7 +250,6 @@ const mergeButton = document.getElementById("MergeGamesBtn");
 mergeButton.addEventListener("click", () => {
 
     const mergedGames = mergeAllGames();
-
     appData.Merged.games = mergedGames;
 
     localStorage.setItem("appData", JSON.stringify(appData));
@@ -262,4 +261,34 @@ mergeButton.addEventListener("click", () => {
             .map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`)
             .join("<br>");
 
+});
+
+const pythonButton = document.getElementById("SendPythonBTN");
+
+pythonButton.addEventListener("click", async () => {
+    try {
+        const response = await fetch("/api/run-algorithm", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(appData)
+        });
+        if (!response.ok) {
+            throw new Error("Server error");
+        }
+
+        const result = await response.json();
+
+        console.log("Python result:", result);
+
+        // Display Python result instead of normal merge
+        document.getElementById("Merged-info").innerHTML =
+            result
+                .map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`)
+                .join("<br>");
+
+    } catch (err) {
+        console.error("Error sending data to Python:", err);
+    }
 });
