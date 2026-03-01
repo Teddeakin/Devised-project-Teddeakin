@@ -10,6 +10,9 @@ const appData = {
     playstation: {
         profile: null,
         games: []
+    },
+    Merged: {
+        games: []
     }
 };
 
@@ -31,6 +34,11 @@ if (savedData) {
     if (appData.playstation.games.length) {
         document.getElementById("Playstation-info").innerHTML = appData.playstation.games .map(game => `${game.name} - ${game.playtime}`) .join("<br>");;
     }
+
+    if (appData.Merged.games.length) {
+        document.getElementById("Merged-info").innerHTML = appData.Merged.games .map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`) .join("<br>");
+    };
+
 }
 
 // Steam --------------------------------------------------
@@ -209,7 +217,7 @@ function mergeAllGames() {
         if (game.playtimeHours) {
             hours = parseFloat(game.playtimeHours);
         } else if (game.playtime) {
-            // console.log(game.playtime.match(/(\d+)H/)) || [0,0][1];
+            // console.log(game.playtime.match(/(\d+)H/));
             const h = game.playtime.match(/(\d+)H/);
             const m = game.playtime.match(/(\d+)M/);
             const s = game.playtime.match(/(\d+)S/);
@@ -242,6 +250,12 @@ const mergeButton = document.getElementById("MergeGamesBtn");
 mergeButton.addEventListener("click", () => {
 
     const mergedGames = mergeAllGames();
+
+    appData.Merged.games = mergedGames;
+
+    localStorage.setItem("appData", JSON.stringify(appData));
+
+    console.log(appData.Merged.games);
 
     document.getElementById("Merged-info").innerHTML =
         mergedGames
