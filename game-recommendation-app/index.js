@@ -327,27 +327,27 @@ app.post("/api/run-algorithm", (req, res) => {
     let result = "";
     let error = "";
 
-    // Send JSON to Python
+    // send JSON to Python as a string 
     python.stdin.write(JSON.stringify(req.body));
     python.stdin.end();
 
-    // Collect output
+    // get output
     python.stdout.on("data", (data) => {
         result += data.toString();
     });
-
+    // listens for errors
     python.stderr.on("data", (data) => {
         error += data.toString();
     });
-
+    // exits python when closed (saves resources)
     python.on("close", (code) => {
 
-        if (code !== 0) {
+        if (code !== 0) { // if python crashes
             console.error("Python exited with error:", error);
             return res.status(500).json({ error: "Python failed" });
         }
 
-        try {
+        try { // if python worked
             const parsed = JSON.parse(result);
             res.json(parsed);
         } catch (err) {

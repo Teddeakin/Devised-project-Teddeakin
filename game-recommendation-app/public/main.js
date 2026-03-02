@@ -267,10 +267,10 @@ const pythonButton = document.getElementById("SendPythonBTN");
 
 pythonButton.addEventListener("click", async () => {
     try {
-        const response = await fetch("/api/run-algorithm", {
+        const response = await fetch("/api/run-algorithm", { // 
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json" 
             },
             body: JSON.stringify(appData)
         });
@@ -282,8 +282,7 @@ pythonButton.addEventListener("click", async () => {
 
         console.log("Python result:", result);
 
-        // Display Python result instead of normal merge
-        document.getElementById("Merged-info").innerHTML =
+        document.getElementById("Python-responce").innerHTML =
             result
                 .map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`)
                 .join("<br>");
