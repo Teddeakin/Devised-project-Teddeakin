@@ -356,3 +356,73 @@ app.post("/api/run-algorithm", (req, res) => {
         }
     });
 });
+
+// Cache data ----------------------------------------------------------
+
+const fs = require("fs");
+const path = require("path");
+
+const CACHE_FILE = path.join(__dirname, "gameCache.json");
+const RAWG_API_KEY = "f8a5b9f2158646e280f46891ec77ca44";
+
+function readCache() {
+    if (!fs.existsSync(CACHE_FILE)) return {};
+    return JSON.parse(fs.readFileSync(CACHE_FILE, "utf8"));
+}
+
+function writeCache(data) {
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(data, null, 2));
+}
+
+function simplifyGameData(rawgData) {
+    if (!rawgData) return { error: "No data found" };
+
+    return {
+        id: rawgData.id,
+        name: rawgData.name,
+        released: rawgData.released,
+        metacritic: rawgData.metacritic,
+        rating: rawgData.rating,
+        genres: rawgData.genres?.map(g => g.slug) || [],
+        tags: rawgData.tags?.map(t => t.slug) || [],
+        esrb: rawgData.esrb_rating?.slug || "not-rated",
+        image: rawgData.background_image 
+    };
+}
+
+app.post("/api/fetch-extra-data", async (req, res) => {
+    const { games } = req.body; 
+    let cache = readCache();
+    let updated = false;
+
+    const enrichedGames = await Promise.all(games.map(async (game) => {
+        const gameKey = game.name.toLowerCase().trim();
+
+        if (cache[gameKey]) {
+            return { ...game, extraData: cache[gameKey] };
+        }
+
+        try {
+            const response = await axios.get(`https://api.rawg.io/api/games`, {
+                params: {
+                    key: RAWG_API_KEY,
+                    search: game.name,
+                    page_size: 1
+                }
+            });
+
+            const rawData = response.data.results[0];
+            const cleanData = simplifyGameData(rawData);
+            
+            cache[gameKey] = cleanData;
+            updated = true;
+            
+            return { ...game, extraData: cleanData };
+        } catch (error) {
+            return game;
+        }
+    }));
+
+    if (updated) writeCache(cache);
+    res.json(enrichedGames);
+});

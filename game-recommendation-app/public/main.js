@@ -24,7 +24,7 @@ if (savedData) {
     Object.assign(appData, parsed);
 
     if (appData.steam.games.length) {
-        document.getElementById("Steam-info").innerHTML = appData.steam.games.map(game => `${game.name} - ${game.playtimeHours} hrs`) .join("<br>");
+        document.getElementById("Steam-info").innerHTML = appData.steam.games.map(game => `${game.name} - ${game.playtimeHours} hrs`).join("<br>");
     }
 
     // if (appData.xbox.games.length) {
@@ -32,11 +32,11 @@ if (savedData) {
     // }
 
     if (appData.playstation.games.length) {
-        document.getElementById("Playstation-info").innerHTML = appData.playstation.games .map(game => `${game.name} - ${game.playtime}`) .join("<br>");;
+        document.getElementById("Playstation-info").innerHTML = appData.playstation.games.map(game => `${game.name} - ${game.playtime}`).join("<br>");;
     }
 
     if (appData.Merged.games.length) {
-        document.getElementById("Merged-info").innerHTML = appData.Merged.games .map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`) .join("<br>");
+        document.getElementById("Merged-info").innerHTML = appData.Merged.games.map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`).join("<br>");
     };
 
 }
@@ -79,14 +79,14 @@ SteamButton.addEventListener("click", async () => {
 
         appData.steam.profile = Steam_Profile_Data;
         appData.steam.games = Steam_Games_Data.games.map(game => ({
-            name: game.name, 
-            appid: game.appid, 
+            name: game.name,
+            appid: game.appid,
             playtimeHours: (game.playtime_forever / 60).toFixed(1)
         }));
 
         localStorage.setItem("appData", JSON.stringify(appData));
 
-        document.getElementById("Steam-info").innerHTML = appData.steam.games.map(game => `${game.name} - ${game.playtimeHours} hrs`) .join("<br>");
+        document.getElementById("Steam-info").innerHTML = appData.steam.games.map(game => `${game.name} - ${game.playtimeHours} hrs`).join("<br>");
 
     } catch (err) {
         console.error("Error fetching Steam data:", err.message);
@@ -185,12 +185,12 @@ PlaystationButton.addEventListener("click", async () => {
 
         appData.playstation.games = Playstation_Games_Data.games.map(game => ({
             name: game.name,
-            playtime: game.playtime || "0h" 
+            playtime: game.playtime || "0h"
         }));
 
         localStorage.setItem("appData", JSON.stringify(appData));
 
-        document.getElementById("Playstation-info").innerHTML = appData.playstation.games .map(game => `${game.name} - ${game.playtime}`) .join("<br>");
+        document.getElementById("Playstation-info").innerHTML = appData.playstation.games.map(game => `${game.name} - ${game.playtime}`).join("<br>");
 
     } catch (err) {
         console.error("Error fetching Steam data:", err.message);
@@ -247,20 +247,31 @@ function mergeAllGames() {
 
 const mergeButton = document.getElementById("MergeGamesBtn");
 
-mergeButton.addEventListener("click", () => {
+mergeButton.addEventListener("click", async () => {
 
     const mergedGames = mergeAllGames();
-    appData.Merged.games = mergedGames;
 
-    localStorage.setItem("appData", JSON.stringify(appData));
 
-    console.log(appData.Merged.games);
+    try {
+        const response = await fetch("/api/fetch-extra-data", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ games: mergedGames })
+        });
 
-    document.getElementById("Merged-info").innerHTML =
-        mergedGames
-            .map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`)
-            .join("<br>");
+        const enrichedGames = await response.json();
 
+        appData.Merged.games = enrichedGames;
+        localStorage.setItem("appData", JSON.stringify(appData));
+
+        document.getElementById("Merged-info").innerHTML =
+            mergedGames
+                .map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`)
+                .join("<br>");
+
+    } catch (err) {
+        console.error("Error fetching extra data:", err);
+    }
 });
 
 const pythonButton = document.getElementById("SendPythonBTN");
@@ -270,7 +281,7 @@ pythonButton.addEventListener("click", async () => {
         const response = await fetch("/api/run-algorithm", { // 
             method: "POST",
             headers: {
-                "Content-Type": "application/json" 
+                "Content-Type": "application/json"
             },
             body: JSON.stringify(appData)
         });
