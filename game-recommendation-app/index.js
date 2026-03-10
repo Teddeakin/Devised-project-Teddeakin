@@ -384,7 +384,7 @@ function simplifyGameData(rawgData) {
         metacritic: rawgData.metacritic,
         rating: rawgData.rating,
         genres: rawgData.genres?.map(g => g.slug) || [],
-        tags: rawgData.tags?.map(t => t.slug) || [],
+        tags: rawgData.tags?.filter(t => t.language === "eng").map(t => t.slug) || [],
         esrb: rawgData.esrb_rating?.slug || "not-rated",
         image: rawgData.background_image 
     };

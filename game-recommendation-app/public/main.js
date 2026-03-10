@@ -278,27 +278,31 @@ const pythonButton = document.getElementById("SendPythonBTN");
 
 pythonButton.addEventListener("click", async () => {
     try {
-        const response = await fetch("/api/run-algorithm", { // 
+        const response = await fetch("/api/run-algorithm", { 
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(appData)
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(appData) 
         });
-        if (!response.ok) {
-            throw new Error("Server error");
-        }
+
+        if (!response.ok) throw new Error("Server error");
 
         const result = await response.json();
+        console.log("Algorithm Results:", result);
 
-        console.log("Python result:", result);
+        // Check if Python sent an error back
+        if (result.error) {
+            document.getElementById("Python-responce").innerText = "Error: " + result.error;
+            return;
+        }
 
-        document.getElementById("Python-responce").innerHTML =
-            result
-                .map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`)
-                .join("<br>");
+        const recommendationString = result
+            .slice(0, 3) // Take the top 3 recommendations
+            .map(game => `${game.name} (Match Score: ${game.score})`)
+            .join(", ");
+
+        document.getElementById("Python-responce").innerHTML = `Top Picks: ${recommendationString}`;
 
     } catch (err) {
-        console.error("Error sending data to Python:", err);
+        console.error("Error running algorithm:", err);
     }
 });
