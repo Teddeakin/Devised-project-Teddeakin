@@ -35,10 +35,12 @@ if (savedData) {
         document.getElementById("Playstation-info").innerHTML = appData.playstation.games.map(game => `${game.name} - ${game.playtime}`).join("<br>");;
     }
 
+    console.log(appData.steam.games)
+    console.log(appData.playstation.games)
+
     if (appData.Merged.games.length) {
         document.getElementById("Merged-info").innerHTML = appData.Merged.games.map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`).join("<br>");
     };
-
 }
 
 // Steam --------------------------------------------------
@@ -274,6 +276,8 @@ mergeButton.addEventListener("click", async () => {
     }
 });
 
+// Python -----------------------------------------------------------------
+
 const pythonButton = document.getElementById("SendPythonBTN");
 
 pythonButton.addEventListener("click", async () => {
@@ -300,9 +304,31 @@ pythonButton.addEventListener("click", async () => {
             .map(game => `${game.name} (Match Score: ${game.score})`)
             .join(", ");
 
-        document.getElementById("Python-responce").innerHTML = `Top Picks: ${recommendationString}`;
+        document.getElementById("Python-responce").innerHTML = `Scores: ${recommendationString}`;
 
     } catch (err) {
         console.error("Error running algorithm:", err);
     }
 });
+
+const KNNButton = document.getElementById("KNNAlgorithm");
+
+KNNButton.addEventListener("click", async () => {
+    try {
+        const response = await fetch("/api/run-algorithm", { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                ...appData, // This sends all your game data
+                algorithmType: "KNN" // This tells Python WHICH function to run
+            }) 
+        });
+
+        const result = await response.json();
+        // Display results in your KNN UI section
+        document.getElementById("KNN-responce").innerHTML = JSON.stringify(result, null, 2);
+
+    } catch (err) {
+        console.error("Error running algorithm:", err);
+    }
+})

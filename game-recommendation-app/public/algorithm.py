@@ -6,18 +6,14 @@ import io
 sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-def main():
+def main(app_data):
     try:
-        # Load Data
-        input_data = sys.stdin.read()
-        app_data = json.loads(input_data)
-        
+
         with open('gameCache.json', 'r', encoding='utf-8') as f:
             cache = json.load(f)
 
         user_games = app_data.get('Merged', {}).get('games', [])
         
-        # Build User Preference Profile
         user_profile = {"genres": {}, "tags": {}}
         total_hours = 0
 
@@ -58,7 +54,7 @@ def main():
             
             final_score = (genre_score * w1) + (tag_score * w2) + (quality * w3)
             
-            results.append({"name": game['name'], "score": round(final_score, 2)}) # 2 is for the number of decimal places
+            results.append({"name": game['name'], "score": round(final_score, 2)}) 
 
         # Sort by highest score
         results = sorted(results, key=lambda x: x['score'], reverse=True)
@@ -67,5 +63,47 @@ def main():
     except Exception as e:
         print(json.dumps({"error": str(e)}))
 
+
+def KNN(app_data):
+    try: 
+
+        with open ('gameCache.json', 'r', encoding='utf-8') as f:
+            Cache = json.load(f)
+
+        User_games = []
+        User_games_names = []
+        User_games_hr= []
+        
+        User_games = app_data.get('Merged', {}).get('games', []) # fyi app_data.get('Merged', {}).get(games['name'], []) also works
+
+        for games in User_games:
+            User_games_names.append(games['name'])
+
+        for games in User_games:
+            User_games_hr.append(games['hours'])
+
+        print(json.dumps(User_games_hr))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+
+
+
 if __name__ == "__main__":
-    main()
+    try:
+        input_raw = sys.stdin.read()
+        if not input_raw:
+            sys.exit(0) 
+
+        app_data = json.loads(input_raw)
+        # l;oad in the cache here asw
+
+        algorithm_choice = app_data.get('algorithmType', 'Linear')
+
+        if algorithm_choice == 'KNN':
+            KNN(app_data)
+        else:
+            main(app_data)
+
+    except Exception as e:
+        print(json.dumps({"error": f"Gatekeeper error: {str(e)}"}))
+
