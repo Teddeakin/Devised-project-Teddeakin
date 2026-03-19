@@ -82,7 +82,29 @@ def KNN(app_data):
         for games in User_games:
             User_games_hr.append(games['hours'])
 
-        print(json.dumps(User_games_hr))
+        Test_users = [
+            {
+                "name": "FPS",
+                "gameData": {"halo reach": 80, "counter-strike": 100, "apex legends": 200}
+            },
+            {
+                "name": "Cozy",
+                "gameData": {"stardew valley": 100, "baldur's gate 3": 120, "slime rancher": 40, "minecraft": 123}
+            } 
+            # make some more 
+        ]
+
+        all_unique_games = set(User_games_names)
+
+        for person in Test_users:
+            for game_name in person["gameData"].keys(): # .keys only gets the names(first thing in the object)
+                all_unique_games.add(game_name)
+
+        total_game_list = sorted(list(all_unique_games))
+
+        
+
+        print(json.dumps(total_game_list))
     except Exception as e:
         print(json.dumps({"error": str(e)}))
 
