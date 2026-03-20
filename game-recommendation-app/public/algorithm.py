@@ -2,6 +2,7 @@ import sys
 import json
 import os
 import io
+import math
 
 sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -82,10 +83,10 @@ def KNN(app_data):
         for games in User_games:
             User_games_hr.append(games['hours'])
 
-        Test_users = [
+        Test_users = [ # add .lower and .strip to somewhere asp
             {
                 "name": "FPS",
-                "gameData": {"halo reach": 80, "counter-strike": 100, "apex legends": 200}
+                "gameData": {"halo: reach": 80, "counter-strike": 100, "apex legends": 200, }
             },
             {
                 "name": "Cozy",
@@ -94,7 +95,7 @@ def KNN(app_data):
             # make some more 
         ]
 
-        all_unique_games = set(User_games_names)
+        all_unique_games = set(User_games_names) # get rid of user games names probably
 
         for person in Test_users:
             for game_name in person["gameData"].keys(): # .keys only gets the names(first thing in the object)
@@ -102,9 +103,54 @@ def KNN(app_data):
 
         total_game_list = sorted(list(all_unique_games))
 
-        
 
-        print(json.dumps(total_game_list))
+        user_updated_list = [] # Update the user list to include the games present in other users library
+        # user_lookup = {g['name']: float(g['hours']) for g in User_games}
+        user_lookup = {g['name'].lower().strip(): float(g['hours']) for g in User_games}
+        for game in total_game_list:
+            user_updated_list.append(user_lookup.get(game, 0))
+        
+        Test_users_list = []
+        for person in Test_users:
+            vector = []
+            for game in total_game_list:
+                vector.append(person["gameData"].get(game, 0))
+            Test_users_list.append({"name": person["name"], "vector": vector})
+        
+        distances = []
+
+        for testUser in Test_users_list:
+            sum_of_squares = 0
+
+            for i in range(len(total_game_list)): # range assigns numbered list
+                diff = user_updated_list[i] - testUser["vector"][i]
+                sum_of_squares += diff ** 2
+            
+            distance = math.sqrt(sum_of_squares)
+            distances.append({"name": testUser["name"], "distance": round(distance, 2)})
+        
+        distances = sorted(distances, key=lambda x: x['distance'])
+
+        nearest_neighbor_name = distances[0]["name"]
+
+        neighbor_data = next(person for person in Test_users if person["name"] == nearest_neighbor_name)
+
+        recommendations = []
+
+        for game_name, play_hours in neighbor_data["gameData"].items():
+            # Check if the user owns this game
+            if game_name.lower().strip() not in [n.lower().strip() for n in User_games_names]:
+                # calculate a Recommendation Score
+                recommendations.append({
+                    "name": game_name,
+                    "score": play_hours,
+                })
+        
+        recommendations = sorted(recommendations, key=lambda x: x['score'], reverse=True)
+
+        print(json.dumps(recommendations))
+
+        # print(json.dumps(distances))
     except Exception as e:
         print(json.dumps({"error": str(e)}))
 
