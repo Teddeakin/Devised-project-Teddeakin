@@ -332,3 +332,25 @@ KNNButton.addEventListener("click", async () => {
         console.error("Error running algorithm:", err);
     }
 })
+
+const KNNButton2 = document.getElementById("KNNAlgorithm2");
+
+KNNButton2.addEventListener("click", async () => {
+    try {
+        const response = await fetch("/api/run-algorithm", { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                ...appData, // This sends all your game data
+                algorithmType: "KNN2" // This tells Python WHICH function to run
+            }) 
+        });
+
+        const result = await response.json();
+        // Display results in your KNN UI section
+        document.getElementById("KNN-responce2").innerHTML = JSON.stringify(result, null, 2);
+
+    } catch (err) {
+        console.error("Error running algorithm:", err);
+    }
+})
