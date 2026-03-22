@@ -33,10 +33,51 @@ def main(app_data):
                     user_profile["tags"][t] = user_profile["tags"].get(t, 0) + (hours * 0.5) # does the same for tags but is half the value
 
         candidates = [
-            {"name": "Elden Ring", "genres": ["action", "rpg"], "tags": ["difficult", "open-world"], "metacritic": 96},
+            {"name": "Halo Reach", "genres": ["action", "shooter"], "tags": ["sci-fi", "classic"], "metacritic": 91},
+            {"name": "Counter-Strike 2", "genres": ["action", "shooter"], "tags": ["competitive", "tactical"], "metacritic": 82},
+            {"name": "Apex Legends", "genres": ["action", "shooter"], "tags": ["battle-royale", "movement"], "metacritic": 88},
+            {"name": "Valorant", "genres": ["action", "shooter"], "tags": ["tactical", "hero-shooter"], "metacritic": 80},
             {"name": "Stardew Valley", "genres": ["rpg", "simulation", "indie"], "tags": ["relaxing", "crafting"], "metacritic": 89},
-            {"name": "Hades", "genres": ["action", "indie"], "tags": ["roguelike", "great-soundtrack"], "metacritic": 93}
-        ]
+            {"name": "Animal Crossing", "genres": ["simulation"], "tags": ["relaxing", "social"], "metacritic": 90},
+            {"name": "Unpacked", "genres": ["puzzle", "indie"], "tags": ["relaxing", "short"], "metacritic": 84},
+            {"name": "Slime Rancher", "genres": ["adventure", "indie"], "tags": ["cute", "exploration"], "metacritic": 81},
+            {"name": "Hades", "genres": ["action", "indie"], "tags": ["roguelike", "great-soundtrack"], "metacritic": 93},
+            {"name": "Slay the Spire", "genres": ["strategy", "indie"], "tags": ["roguelike", "deck-builder"], "metacritic": 89},
+            {"name": "Dead Cells", "genres": ["action", "indie"], "tags": ["roguelike", "metroidvania"], "metacritic": 89},
+            {"name": "Balatro", "genres": ["strategy", "indie"], "tags": ["roguelike", "addictive"], "metacritic": 90},
+            {"name": "Elden Ring", "genres": ["action", "rpg"], "tags": ["difficult", "open-world"], "metacritic": 96},
+            {"name": "Dark Souls III", "genres": ["action", "rpg"], "tags": ["difficult", "dark-fantasy"], "metacritic": 89},
+            {"name": "Sekiro", "genres": ["action", "adventure"], "tags": ["difficult", "stealth"], "metacritic": 90},
+            {"name": "Lies of P", "genres": ["action", "rpg"], "tags": ["difficult", "souls-like"], "metacritic": 80},
+            {"name": "Baldurs Gate 3", "genres": ["rpg", "strategy"], "tags": ["story-rich", "turn-based"], "metacritic": 96},
+            {"name": "The Witcher 3", "genres": ["rpg", "action"], "tags": ["open-world", "story-rich"], "metacritic": 92},
+            {"name": "Cyberpunk 2077", "genres": ["rpg", "action"], "tags": ["sci-fi", "open-world"], "metacritic": 86},
+            {"name": "Starfield", "genres": ["rpg", "action"], "tags": ["space", "exploration"], "metacritic": 83},
+            {"name": "Age of Empires II", "genres": ["strategy"], "tags": ["rts", "historical"], "metacritic": 92},
+            {"name": "Starcraft II", "genres": ["strategy"], "tags": ["rts", "sci-fi"], "metacritic": 93},
+            {"name": "Manor Lords", "genres": ["strategy", "simulation"], "tags": ["city-builder", "historical"], "metacritic": 84},
+            {"name": "Civilization VI", "genres": ["strategy"], "tags": ["4x", "turn-based"], "metacritic": 88},
+            {"name": "Forza Horizon 5", "genres": ["racing", "sports"], "tags": ["open-world", "cars"], "metacritic": 92},
+            {"name": "Gran Turismo 7", "genres": ["racing", "sports"], "tags": ["simulation", "cars"], "metacritic": 87},
+            {"name": "F1 24", "genres": ["racing", "sports"], "tags": ["simulation", "competitive"], "metacritic": 78},
+            {"name": "Assetto Corsa", "genres": ["racing", "sports"], "tags": ["simulation", "realistic"], "metacritic": 85},
+            {"name": "FC 25", "genres": ["sports"], "tags": ["football", "competitive"], "metacritic": 76},
+            {"name": "NBA 2K25", "genres": ["sports"], "tags": ["basketball", "competitive"], "metacritic": 79},
+            {"name": "Madden NFL 25", "genres": ["sports"], "tags": ["american-football", "competitive"], "metacritic": 70},
+            {"name": "Rocket League", "genres": ["sports", "action"], "tags": ["competitive", "multiplayer"], "metacritic": 86},
+            {"name": "Resident Evil 4", "genres": ["action", "horror"], "tags": ["remake", "survival-horror"], "metacritic": 93},
+            {"name": "Silent Hill 2", "genres": ["horror", "adventure"], "tags": ["psychological", "remake"], "metacritic": 86},
+            {"name": "Phasmophobia", "genres": ["horror", "indie"], "tags": ["co-op", "ghosts"], "metacritic": 80},
+            {"name": "Dead by Daylight", "genres": ["horror", "action"], "tags": ["asymmetrical", "survival"], "metacritic": 71},
+            {"name": "Minecraft", "genres": ["sandbox", "survival"], "tags": ["crafting", "creative"], "metacritic": 93},
+            {"name": "Rust", "genres": ["survival", "action"], "tags": ["pvp", "crafting"], "metacritic": 69},
+            {"name": "Ark Survival Ascended", "genres": ["survival", "action"], "tags": ["dinosaurs", "crafting"], "metacritic": 70},
+            {"name": "Terraria", "genres": ["sandbox", "action"], "tags": ["crafting", "exploration"], "metacritic": 83},
+            {"name": "Deus Ex", "genres": ["rpg", "shooter"], "tags": ["cyberpunk", "immersive-sim"], "metacritic": 90},
+            {"name": "Dishonored 2", "genres": ["action", "adventure"], "tags": ["stealth", "immersive-sim"], "metacritic": 88},
+            {"name": "Prey", "genres": ["action", "shooter"], "tags": ["sci-fi", "immersive-sim"], "metacritic": 82},
+            {"name": "Hitman 3", "genres": ["action", "stealth"], "tags": ["assassin", "sandbox"], "metacritic": 87}
+    ]
 
         results = []
 
