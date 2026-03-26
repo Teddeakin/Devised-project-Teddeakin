@@ -1,5 +1,7 @@
 const express = require("express");
 const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(express.urlencoded({ extended: false }));
@@ -8,6 +10,11 @@ app.listen(3000, () => console.log("Listening on http://localhost:3000"));
 app.use(express.json());
 
 app.use(express.static("./public"));
+
+// starts the website on Accounts.html
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "Accounts.html"));
+});
 
 // Steam -------------------------------------------------------------------------------------
 
@@ -358,9 +365,6 @@ app.post("/api/run-algorithm", (req, res) => {
 });
 
 // Cache data ----------------------------------------------------------
-
-const fs = require("fs");
-const path = require("path");
 
 const CACHE_FILE = path.join(__dirname, "gameCache.json");
 const RAWG_API_KEY = "f8a5b9f2158646e280f46891ec77ca44";

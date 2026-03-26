@@ -278,7 +278,9 @@ mergeButton.addEventListener("click", async () => {
 
 // Python -----------------------------------------------------------------
 
-const pythonButton = document.getElementById("SendPythonBTN");
+let weightedChart = null; // storing the chart 
+
+const pythonButton = document.getElementById("SendPythonBTN"); /// rename 
 
 pythonButton.addEventListener("click", async () => {
     try {
@@ -305,6 +307,29 @@ pythonButton.addEventListener("click", async () => {
             .join(", ");
 
         document.getElementById("Python-responce").innerHTML = `Scores: ${recommendationString}`;
+
+        // get the x and y axis
+        const labels = result.map(game => game.name);
+        const scores = result.map(game => game.score);
+        // add something for colours?
+
+        if (weightedChart) { // checks if there already a chart and removes it
+            weightedChart.destroy();
+        }
+
+        const ctx = document.getElementById("WeightedLinearChart").getContext("2d");
+
+        weightedChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "weighted Chart Score",
+                    data: scores,
+                    borderWidth: 1
+                }]
+            }
+        })
 
     } catch (err) {
         console.error("Error running algorithm:", err);
@@ -333,7 +358,7 @@ KNNButton.addEventListener("click", async () => {
     }
 })
 
-const KNNButton2 = document.getElementById("KNNAlgorithm2");
+const KNNButton2 = document.getElementById("KNNAlgorithm2"); // rename
 
 KNNButton2.addEventListener("click", async () => {
     try {
