@@ -328,6 +328,39 @@ pythonButton.addEventListener("click", async () => {
                     data: scores,
                     borderWidth: 1
                 }]
+            },
+            options: {
+                responsive: true,
+
+                plugins: {
+                    legend: {
+                        display: true
+                    },
+                    tooltip: {
+                        callbacks: {
+                            // show nicer tooltip text
+                            label: function(context) {
+                                return `Score: ${context.raw}`;
+                            }
+                        }
+                    }
+                },
+
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: "Match Strength"
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: "Games"
+                        }
+                    }
+                }
             }
         })
 
