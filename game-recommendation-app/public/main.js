@@ -284,10 +284,10 @@ const pythonButton = document.getElementById("SendPythonBTN"); /// rename
 
 pythonButton.addEventListener("click", async () => {
     try {
-        const response = await fetch("/api/run-algorithm", { 
+        const response = await fetch("/api/run-algorithm", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(appData) 
+            body: JSON.stringify(appData)
         });
 
         if (!response.ok) throw new Error("Server error");
@@ -339,7 +339,7 @@ pythonButton.addEventListener("click", async () => {
                     tooltip: {
                         callbacks: {
                             // show nicer tooltip text
-                            label: function(context) {
+                            label: function (context) {
                                 return `Score: ${context.raw}`;
                             }
                         }
@@ -369,22 +369,136 @@ pythonButton.addEventListener("click", async () => {
     }
 });
 
+KNNCosineChart = null;
+
 const KNNButton = document.getElementById("KNNAlgorithm");
 
 KNNButton.addEventListener("click", async () => {
     try {
-        const response = await fetch("/api/run-algorithm", { 
+        const response = await fetch("/api/run-algorithm", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 ...appData, // This sends all your game data
                 algorithmType: "KNN" // This tells Python WHICH function to run
-            }) 
+            })
         });
 
         const result = await response.json();
         // Display results in your KNN UI section
-        document.getElementById("KNN-responce").innerHTML = JSON.stringify(result, null, 2);
+        document.getElementById("KNN-responce").innerHTML = result.recommendations.map(game => `${game.name} - ${game.score}`).join("<br>");
+
+        const ctx = document.getElementById("CosineChart").getContext("2d");
+
+        // Build scatter data for the recommended games themselves
+
+        const recommendations = result.recommendations || [];
+
+        // Sort best → worst
+        recommendations.sort((a, b) => b.score - a.score);
+
+        // X-axis
+        const labels = recommendations.map(game => game.name);
+
+        // Final scores
+        const finalScores = recommendations.map(game => game.score);
+
+        // Get all neighbor labels dynamically
+        const neighborLabels = new Set();
+
+        recommendations.forEach(game => {
+            Object.keys(game.contributions || {}).forEach(label => {
+                neighborLabels.add(label);
+            });
+        });
+
+        // Build datasets for each neighbor
+        const datasets = [];
+
+        // Final combined score (main line)
+        datasets.push({
+            label: "Final Score",
+            data: finalScores,
+            borderColor: 'black',
+            pointBackgroundColor: 'black',
+            borderWidth: 3,
+            tension: 0.3,
+            pointRadius: 6,
+            fill: false
+        });
+
+        const colors = [
+            'red',
+            'blue',
+            'green',
+            'orange',
+            'purple'
+        ];
+
+        let colorIndex = 0;
+
+        // Add each neighbor as its own line
+        neighborLabels.forEach(label => {
+            const data = recommendations.map(game => {
+                return game.contributions?.[label] || 0;
+            });
+
+            datasets.push({
+                label: `${label} Influence`,
+                data: data,
+                borderColor: colors[colorIndex % colors.length],
+                pointBackgroundColor: colors[colorIndex % colors.length],
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 4,
+                fill: false
+            });
+
+            colorIndex++;
+        });
+
+        if (KNNCosineChart) KNNCosineChart.destroy();
+
+        KNNCosineChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+
+                            // Title = game name
+                            title: function (context) {
+                                return context[0].label;
+                            },
+
+                            // Main content
+                            label: function (context) {
+                                const index = context.dataIndex;
+                                const game = recommendations[index];
+
+                                let lines = [];
+
+                                // Final score
+                                lines.push(`Final Score: ${game.score}`);
+
+                                // Contributions breakdown
+                                if (game.contributions) {
+                                    Object.entries(game.contributions).forEach(([label, value]) => {
+                                        lines.push(`${label}: ${(value * 100).toFixed(1)}%`);
+                                    });
+                                }
+
+                                return lines;
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
     } catch (err) {
         console.error("Error running algorithm:", err);
@@ -395,13 +509,13 @@ const KNNButton2 = document.getElementById("KNNAlgorithm2"); // rename
 
 KNNButton2.addEventListener("click", async () => {
     try {
-        const response = await fetch("/api/run-algorithm", { 
+        const response = await fetch("/api/run-algorithm", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                ...appData, // This sends all your game data
-                algorithmType: "KNN2" // This tells Python WHICH function to run
-            }) 
+                ...appData,
+                algorithmType: "KNN2"
+            })
         });
 
         const result = await response.json();

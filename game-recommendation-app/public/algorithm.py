@@ -132,7 +132,7 @@ def KNN(app_data):
             {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90}},
             {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacked": 40, "slime rancher": 60}},
             {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80}},
-            {"label": "Soulslike", "gameData": {"elden ring": 200, "dark souls iii": 100, "sekiro: shadows die twice": 80, "lies of p": 70}},
+            {"label": "Soulslike", "gameData": {"elden ring": 200, "dark souls iii": 100, "sekiro: shadows die twice": 80, "lies of p": 70, "dead cells": 90}},
             {"label": "RPG", "gameData": {"baldurs gate 3": 180, "the witcher 3": 150, "cyberpunk 2077": 100, "starfield": 60}},
             {"label": "RTS", "gameData": {"age of empires ii": 150, "starcraft ii": 120, "manor lords": 80, "civilization vi": 110}},
             {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70}},
@@ -218,20 +218,33 @@ def KNN(app_data):
                     base_score = (neighbor_relevance * w1) + (quality * w2) + (min(genre_bonus, 2) * w3)
                     final_score = base_score * weight
 
-                    if name_key in results:
-                        results[name_key]["score"] += final_score
-                    else:
+                    if name_key not in results: 
                         results[name_key] = {
-                            "name": title,
-                            "score": final_score
-                        }
+                        "name": title,
+                        "score": 0,
+                        "contributions": {}
+                        }      
+                    results[name_key]["score"] += final_score
+                    results[name_key]["contributions"][neighbor["label"]] = final_score
 
         final = sorted(results.values(), key=lambda x: x["score"], reverse=True)
 
         for item in final:
+            # Normalize contributions (make them comparable)
+            total = sum(item["contributions"].values())
+
+            if total > 0:
+                for k in item["contributions"]:
+                    item["contributions"][k] /= total
+
+            # Round contributions (after normalization)
+            for k in item["contributions"]:
+                item["contributions"][k] = round(item["contributions"][k], 2)
+
+            # Round final score
             item["score"] = round(item["score"], 2)
 
-        print(json.dumps(final[:10]))
+        print(json.dumps({"recommendations": final, "similarities": ranked}))
 
     except Exception as e:
         print(json.dumps({"error": f"KNN Engine Error: {str(e)}"}))
