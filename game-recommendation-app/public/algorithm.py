@@ -112,21 +112,9 @@ def KNN(app_data):
             cache = json.load(f)
 
         user_games = app_data.get('Merged', {}).get('games', [])
-        user_profile = {"genres": {}, "tags": {}}
 
         user_games_normalized = {n["name"].lower().strip() for n in user_games}
         user_games_dict = {n["name"].lower().strip(): float(n.get("hours", 0)) for n in user_games}
-
-        # Build user profile (genres + tags)
-        for name, hours in user_games_dict.items():
-            if name in cache:
-                data = cache[name]
-
-                for g in data.get("genres", []):
-                    user_profile["genres"][g] = user_profile["genres"].get(g, 0) + hours
-
-                for t in data.get("tags", []):
-                    user_profile["tags"][t] = user_profile["tags"].get(t, 0) + (hours * 0.5)
 
         player_profiles = [
             {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90}},
@@ -198,31 +186,15 @@ def KNN(app_data):
 
                 if name_key not in user_games_normalized:
 
-                    # Taste score (same as before but scaled)
                     neighbor_relevance = (hours / total_neighbor) * 10
 
-                    # Get cache data
-                    game_info = cache.get(name_key, {})
-
-                    # Quality score
-                    quality = game_info.get("metacritic", 70) / 10
-
-                    # Genre bonus
-                    genre_bonus = 0
-                    for g in game_info.get("genres", []):
-                        if g in user_profile["genres"]:
-                            genre_bonus += 1.0
-
-                    # Final weighted score
-                    w1, w2, w3 = 0.6, 0.2, 0.2
-                    base_score = (neighbor_relevance * w1) + (quality * w2) + (min(genre_bonus, 2) * w3)
-                    final_score = base_score * weight
+                    final_score = neighbor_relevance * weight
 
                     if name_key not in results: 
                         results[name_key] = {
-                        "name": title,
-                        "score": 0,
-                        "contributions": {}
+                            "name": title,
+                            "score": 0,
+                            "contributions": {}
                         }      
                     results[name_key]["score"] += final_score
                     results[name_key]["contributions"][neighbor["label"]] = final_score
