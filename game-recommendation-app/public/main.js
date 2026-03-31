@@ -35,8 +35,8 @@ if (savedData) {
         document.getElementById("Playstation-info").innerHTML = appData.playstation.games.map(game => `${game.name} - ${game.playtime}`).join("<br>");;
     }
 
-    console.log(appData.steam.games)
-    console.log(appData.playstation.games)
+    // // console.log(appData.steam.games)
+    // // console.log(appData.playstation.games)
 
     if (appData.Merged.games.length) {
         document.getElementById("Merged-info").innerHTML = appData.Merged.games.map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`).join("<br>");
@@ -65,7 +65,7 @@ SteamButton.addEventListener("click", async () => {
     const steamId = SteamInput.value.trim();
 
     if (!steamId) {
-        console.log("No SteamID entered");
+        // console.log("No SteamID entered");
         return;
     }
 
@@ -74,10 +74,10 @@ SteamButton.addEventListener("click", async () => {
     try {
 
         const Steam_Profile_Data = await fetchJSON(`/api/steam/profile/${steamId}`);
-        console.log("Profile data:", Steam_Profile_Data);
+        // console.log("Profile data:", Steam_Profile_Data);
 
         const Steam_Games_Data = await fetchJSON(`/api/steam/games/${steamId}`);
-        console.log("Owned games:", Steam_Games_Data);
+        // console.log("Owned games:", Steam_Games_Data);
 
         appData.steam.profile = Steam_Profile_Data;
         appData.steam.games = Steam_Games_Data.games.map(game => ({
@@ -119,11 +119,11 @@ async function fetchJSON(url) {
 }
 
 XboxButton.addEventListener("click", async () => {
-    console.log("searching");
+    // console.log("searching");
     const gamertag = XboxInput.value.trim();
 
     if (!gamertag) {
-        console.log("No gamertag entered");
+        // console.log("No gamertag entered");
         return;
     }
 
@@ -133,15 +133,15 @@ XboxButton.addEventListener("click", async () => {
 
         const Xbox_Profile_Data = await fetchJSON(`/api/xbox/profile/${encodeURIComponent(gamertag)}`);
 
-        console.log("Xbox profile: ", Xbox_Profile_Data);
+        // console.log("Xbox profile: ", Xbox_Profile_Data);
 
         const Xboxgames = await fetchJSON(`/api/xbox/game-names/${Xbox_Profile_Data.xuid}`);
-        console.log("Xbox games owned: ", Xboxgames);
+        // console.log("Xbox games owned: ", Xboxgames);
 
         appData.xbox.profile = Xbox_Profile_Data;
         appData.xbox.games = Xboxgames;
 
-        console.log("Xboxgames")
+        // console.log("Xboxgames")
 
         localStorage.setItem("appData", JSON.stringify(appData));
 
@@ -174,7 +174,7 @@ PlaystationButton.addEventListener("click", async () => {
     const PlaystationId = PlaystationInput.value.trim();
 
     if (!PlaystationInput) {
-        console.log("No SteamID entered");
+        // console.log("No SteamID entered");
         return;
     }
 
@@ -183,7 +183,7 @@ PlaystationButton.addEventListener("click", async () => {
         localStorage.setItem("PlaystationId", PlaystationId);
 
         const Playstation_Games_Data = await fetchJSON(`/api/playstation/games/${PlaystationId}`);
-        console.log("Owned games:", Playstation_Games_Data);
+        // console.log("Owned games:", Playstation_Games_Data);
 
         appData.playstation.games = Playstation_Games_Data.games.map(game => ({
             name: game.name,
@@ -219,7 +219,7 @@ function mergeAllGames() {
         if (game.playtimeHours) {
             hours = parseFloat(game.playtimeHours);
         } else if (game.playtime) {
-            // console.log(game.playtime.match(/(\d+)H/));
+            // // console.log(game.playtime.match(/(\d+)H/));
             const h = game.playtime.match(/(\d+)H/);
             const m = game.playtime.match(/(\d+)M/);
             const s = game.playtime.match(/(\d+)S/);
@@ -241,7 +241,7 @@ function mergeAllGames() {
                 hours: hours
             });
         }
-        // console.log(game.name, game.playtime);
+        // // console.log(game.name, game.playtime);
     }
 
     return Array.from(mergedMap.values());
@@ -293,7 +293,7 @@ pythonButton.addEventListener("click", async () => {
         if (!response.ok) throw new Error("Server error");
 
         const result = await response.json();
-        console.log("Algorithm Results:", result);
+        // console.log("Algorithm Results:", result);
 
         // Check if Python sent an error back
         if (result.error) {
@@ -338,7 +338,6 @@ pythonButton.addEventListener("click", async () => {
                     },
                     tooltip: {
                         callbacks: {
-                            // show nicer tooltip text
                             label: function (context) {
                                 return `Score: ${context.raw}`;
                             }
@@ -369,6 +368,83 @@ pythonButton.addEventListener("click", async () => {
     }
 });
 
+
+function drawAdjacencyGrid(result) {
+    const gamePoints = result.game_adjacency;
+    const neighbors = result.neighbors;
+    if (!gamePoints || !neighbors) return;
+
+    const dataTraces = [];
+
+    const owned = gamePoints.filter(g => g.owned);
+    const recs = gamePoints.filter(g => !g.owned);
+
+    const getHover = (set) => set.map(g => `<b>${g.name}</b><br>Profiles: ${g.all_owners}<extra></extra>`);
+
+    dataTraces.push({
+        x: owned.map(g => g.coords.x), y: owned.map(g => g.coords.y), z: owned.map(g => g.coords.z),
+        mode: 'markers', name: 'Your Games',
+        hovertext: getHover(owned), hovertemplate: '%{hovertext}',
+        marker: { size: 10, color: '#FFD700' }, type: 'scatter3d'
+    });
+
+    dataTraces.push({
+        x: recs.map(g => g.coords.x), y: recs.map(g => g.coords.y), z: recs.map(g => g.coords.z),
+        mode: 'markers', name: 'Suggestions',
+        hovertext: getHover(recs), hovertemplate: '%{hovertext}',
+        marker: { size: 7, color: '#00FFFF', opacity: 0.7 }, type: 'scatter3d'
+    });
+
+
+    const groupPairs = [];
+    neighbors.forEach(neighborName => {
+        const groupOwned = owned.filter(g => g.group === neighborName);
+        const groupRecs = recs.filter(g => g.group === neighborName);
+
+        groupOwned.forEach(oGame => {
+            groupRecs.forEach(rGame => {
+                groupPairs.push({ oGame, rGame });
+            });
+        });
+    });
+
+
+    const sortedPairs = [...groupPairs].sort((a, b) => (b.rGame.score || 0) - (a.rGame.score || 0));
+
+
+    sortedPairs.forEach((pair, index) => {
+        const normalized = (sortedPairs.length === 1) ? 1 : 1 - index / (sortedPairs.length - 1);
+
+        dataTraces.push({
+            type: 'scatter3d',
+            mode: 'lines',
+            x: [pair.oGame.coords.x, pair.rGame.coords.x],
+            y: [pair.oGame.coords.y, pair.rGame.coords.y],
+            z: [pair.oGame.coords.z, pair.rGame.coords.z],
+            line: {
+                color: `rgba(0, 255, 255, ${0.2 + normalized * 0.8})`,
+                width: 1 + normalized * 5
+            },
+            showlegend: false,
+            hoverinfo: 'none'
+        });
+    });
+
+    const layout = {
+        title: 'KNN - cosine',
+        paper_bgcolor: '#1a1a1a',
+        font: { color: 'white' },
+        scene: {
+            xaxis: { title: neighbors[0] || 'N1' },
+            yaxis: { title: neighbors[1] || 'N2' },
+            zaxis: { title: neighbors[2] || 'N3' }
+        },
+        margin: { l: 0, r: 0, b: 0, t: 40 }
+    };
+
+    Plotly.newPlot('AdjacencyGrid', dataTraces, layout);
+}
+
 KNNCosineChart = null;
 
 const KNNButton = document.getElementById("KNNAlgorithm");
@@ -379,14 +455,18 @@ KNNButton.addEventListener("click", async () => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                ...appData, // This sends all your game data
-                algorithmType: "KNN" // This tells Python WHICH function to run
+                ...appData, 
+                algorithmType: "KNN" 
             })
         });
 
         const result = await response.json();
+        // console.log("FULL RESULT:", result);
+        // console.log("Recommendations:", result.recommendations);
         // Display results in your KNN UI section
         document.getElementById("KNN-responce").innerHTML = result.recommendations.map(game => `${game.name} - ${game.score}`).join("<br>");
+
+        drawAdjacencyGrid(result);
 
         const ctx = document.getElementById("CosineChart").getContext("2d");
 
@@ -394,14 +474,21 @@ KNNButton.addEventListener("click", async () => {
 
         const recommendations = result.recommendations || [];
 
+        // console.log("Recommendations array:", recommendations);
+        // console.log("First recommendation:", recommendations[0]);
+
         // Sort best → worst
         recommendations.sort((a, b) => b.score - a.score);
+
+        // console.log("Sorted recommendations:", recommendations);
 
         // X-axis
         const labels = recommendations.map(game => game.name);
 
         // Final scores
         const finalScores = recommendations.map(game => game.score);
+
+        // console.log("Final scores:", finalScores);
 
         // Get all neighbor labels dynamically
         const neighborLabels = new Set();
@@ -411,6 +498,8 @@ KNNButton.addEventListener("click", async () => {
                 neighborLabels.add(label);
             });
         });
+
+        // console.log("Neighbor labels:", [...neighborLabels]);
 
         // Build datasets for each neighbor
         const datasets = [];
@@ -440,7 +529,11 @@ KNNButton.addEventListener("click", async () => {
         // Add each neighbor as its own line
         neighborLabels.forEach(label => {
             const data = recommendations.map(game => {
-                return game.contributions?.[label] || 0;
+                const value = game.contributions?.[label];
+
+                // console.log(`Game: ${game.name}, Label: ${label}, Value:`, value);
+
+                return value || 0;
             });
 
             datasets.push({
@@ -519,6 +612,7 @@ KNNButton2.addEventListener("click", async () => {
         });
 
         const result = await response.json();
+
         // Display results in your KNN UI section
         document.getElementById("KNN-responce2").innerHTML = JSON.stringify(result, null, 2);
 

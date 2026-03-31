@@ -120,12 +120,12 @@ def KNN(app_data):
             {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90}},
             {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacked": 40, "slime rancher": 60}},
             {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80}},
-            {"label": "Soulslike", "gameData": {"elden ring": 200, "dark souls iii": 100, "sekiro: shadows die twice": 80, "lies of p": 70, "dead cells": 90}},
+            {"label": "Soulslike", "gameData": {"elden ring": 200, "dark souls iii": 100, "sekiro: shadows die twice": 80, "lies of p": 70, "dead cells": 90, "Ori and the Blind Forest": 1.9}},
             {"label": "RPG", "gameData": {"baldurs gate 3": 180, "the witcher 3": 150, "cyberpunk 2077": 100, "starfield": 60}},
             {"label": "RTS", "gameData": {"age of empires ii": 150, "starcraft ii": 120, "manor lords": 80, "civilization vi": 110}},
             {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70}},
             {"label": "Sports", "gameData": {"fc 25": 200, "nba 2k25": 150, "madden nfl 25": 80, "rocket league": 120}},
-            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150}},
+            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90,}},
             {"label": "Survival/Sandbox", "gameData": {"minecraft": 200, "rust": 150, "ark survival ascended": 120, "terraria": 100}},
             {"label": "Immersive Sim", "gameData": {"deus ex": 80, "dishonored 2": 70, "prey": 90, "hitman 3": 110}}
         ]
@@ -173,6 +173,51 @@ def KNN(app_data):
         ranked = sorted(distances, key=lambda x: x["similarity"], reverse=True)
         top_k = ranked[:3]
 
+        game_adjacency_list = []
+        neighbor_names = [n["label"] for n in top_k]
+
+        all_neighbor_games = set()
+        for n in top_k:
+            all_neighbor_games.update(n["data"].keys())
+
+        for g_name in all_neighbor_games:
+
+            total_n1 = sum(top_k[0]["data"].values()) if len(top_k) > 0 else 1
+            total_n2 = sum(top_k[1]["data"].values()) if len(top_k) > 1 else 1
+            total_n3 = sum(top_k[2]["data"].values()) if len(top_k) > 2 else 1
+
+            coords = {
+                "x": (top_k[0]["data"].get(g_name, 0) / total_n1) * 100,
+                "y": (top_k[1]["data"].get(g_name, 0) / total_n2) * 100,
+                "z": (top_k[2]["data"].get(g_name, 0) / total_n3) * 100
+            }
+            owners = [p["label"] for p in player_profiles if g_name.lower().strip() in {k.lower().strip() for k in p["gameData"].keys()}]
+
+            active_neighbors = [n["label"] for n in top_k if g_name.lower().strip() in {k.lower().strip() for k in n["data"].keys()}]
+
+            game_adjacency_list.append({
+                "name": g_name,
+                "coords": coords,
+                "owned": g_name.lower().strip() in user_games_normalized,
+                "group": active_neighbors[0] if active_neighbors else "None",
+                "all_owners": ", ".join(owners) 
+            })
+
+            pulls = [coords["x"], coords["y"], coords["z"]]
+            max_pull_index = pulls.index(max(pulls))
+            primary_neighbor = neighbor_names[max_pull_index]
+
+            strength = max(coords["x"], coords["y"], coords["z"])
+
+            game_adjacency_list.append({
+                "name": g_name,
+                "coords": coords,
+                "owned": g_name.lower().strip() in user_games_normalized,
+                "group": primary_neighbor, 
+                "all_owners": ", ".join(owners), 
+                "strength": strength
+            })
+
         results = {}
 
         for rank, neighbor in enumerate(top_k):
@@ -202,21 +247,18 @@ def KNN(app_data):
         final = sorted(results.values(), key=lambda x: x["score"], reverse=True)
 
         for item in final:
-            # Normalize contributions (make them comparable)
             total = sum(item["contributions"].values())
 
             if total > 0:
                 for k in item["contributions"]:
                     item["contributions"][k] /= total
 
-            # Round contributions (after normalization)
             for k in item["contributions"]:
                 item["contributions"][k] = round(item["contributions"][k], 2)
 
-            # Round final score
             item["score"] = round(item["score"], 2)
 
-        print(json.dumps({"recommendations": final, "similarities": ranked}))
+        print(json.dumps({"recommendations": final, "similarities": ranked, "game_adjacency": game_adjacency_list, "neighbors": neighbor_names}))
 
     except Exception as e:
         print(json.dumps({"error": f"KNN Engine Error: {str(e)}"}))
