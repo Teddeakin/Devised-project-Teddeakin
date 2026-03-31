@@ -625,7 +625,9 @@ KNNButton.addEventListener("click", async () => {
     }
 })
 
-const KNNButton2 = document.getElementById("KNNAlgorithm2"); // rename
+let KNNEuclideanChart = null;
+
+const KNNButton2 = document.getElementById("KNNAlgorithm2");
 
 KNNButton2.addEventListener("click", async () => {
     try {
@@ -640,10 +642,113 @@ KNNButton2.addEventListener("click", async () => {
 
         const result = await response.json();
 
-        // Display results in your KNN UI section
-        document.getElementById("KNN-responce2").innerHTML = JSON.stringify(result, null, 2);
+        if (result.error) {
+            document.getElementById("KNN-responce2").innerText = "Error: " + result.error;
+            return;
+        }
+
+        // ---- Text output ----
+        const recommendations = result.recommendations || [];
+
+        document.getElementById("KNN-responce2").innerHTML =
+            recommendations.map(game => `${game.name} - ${game.score}`).join("<br>");
+
+        // ---- 3D graph ----
+        drawAdjacencyGrid(result);
+
+        // ---- LINE CHART (EUCLIDEAN) ----
+        const ctx = document.getElementById("EuclideanChart").getContext("2d");
+
+        // Sort best → worst
+        recommendations.sort((a, b) => b.score - a.score);
+
+        const labels = recommendations.map(game => game.name);
+        const finalScores = recommendations.map(game => game.score);
+
+        // Get all neighbor labels dynamically
+        const neighborLabels = new Set();
+
+        recommendations.forEach(game => {
+            Object.keys(game.contributions || {}).forEach(label => {
+                neighborLabels.add(label);
+            });
+        });
+
+        const datasets = [];
+
+        // Final score line
+        datasets.push({
+            label: "Final Score",
+            data: finalScores,
+            borderColor: "black",
+            pointBackgroundColor: "black",
+            borderWidth: 3,
+            tension: 0.3,
+            pointRadius: 6,
+            fill: false
+        });
+
+        const colors = ["red", "blue", "green", "orange", "purple"];
+        let colorIndex = 0;
+
+        // Add each neighbor influence
+        neighborLabels.forEach(label => {
+            const data = recommendations.map(game => {
+                return game.contributions?.[label] || 0;
+            });
+
+            datasets.push({
+                label: `${label} Influence`,
+                data: data,
+                borderColor: colors[colorIndex % colors.length],
+                pointBackgroundColor: colors[colorIndex % colors.length],
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 4,
+                fill: false
+            });
+
+            colorIndex++;
+        });
+
+        // Destroy old chart if it exists
+        if (KNNEuclideanChart) KNNEuclideanChart.destroy();
+
+        KNNEuclideanChart = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function (context) {
+                                return context[0].label;
+                            },
+                            label: function (context) {
+                                const index = context.dataIndex;
+                                const game = recommendations[index];
+
+                                let lines = [];
+                                lines.push(`Final Score: ${game.score}`);
+
+                                if (game.contributions) {
+                                    Object.entries(game.contributions).forEach(([label, value]) => {
+                                        lines.push(`${label}: ${(value * 100).toFixed(1)}%`);
+                                    });
+                                }
+
+                                return lines;
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
     } catch (err) {
-        console.error("Error running algorithm:", err);
+        console.error("Error running KNN2:", err);
     }
-})
+});

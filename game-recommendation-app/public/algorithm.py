@@ -95,8 +95,54 @@ def main(app_data):
             quality = game['metacritic'] / 10 # looking for the metacritic score for that game
             
             final_score = (genre_score * w1) + (tag_score * w2) + (quality * w3)
+
+            genre_details = []
+            for g in game["genres"]:
+                raw_value = user_profile["genres"].get(g, 0)
+                if raw_value > 0:
+                    genre_details.append({
+                        "name": g,
+                        "raw": round(raw_value, 2),
+                        "weighted": round(raw_value * w1, 2)
+                    })
             
-            results.append({"name": game['name'], "score": round(final_score, 2)}) 
+            tag_details = []
+            for t in game["tags"]:
+                raw_value = user_profile["tags"].get(t, 0)
+                if raw_value > 0:
+                    tag_details.append({
+                        "name": t,
+                        "raw": round(raw_value, 2),
+                        "weighted": round(raw_value * w2, 2)
+                    })
+
+            genre_weighted = round(genre_score * w1, 2)
+            tag_weighted = round(tag_score * w2, 2)
+            metacritic_weighted = round(quality * w3, 2)
+
+            results.append({
+                "name": game["name"],
+                "score": round(final_score, 2),
+                "breakdown": {
+                    "genre_total": genre_weighted,
+                    "tag_total": tag_weighted,
+                    "metacritic_total": metacritic_weighted
+                },
+                "details": {
+                    "genres": genre_details,
+                    "tags": tag_details
+                },
+                "formula": {
+                    "genre_score_raw": round(genre_score, 2),
+                    "tag_score_raw": round(tag_score, 2),
+                    "quality_raw": round(quality, 2),
+                    "weights": {
+                        "genre": w1,
+                        "tag": w2,
+                        "metacritic": w3
+                    }
+                }
+            })
 
         # Sort by highest score
         results = sorted(results, key=lambda x: x['score'], reverse=True)
@@ -118,14 +164,14 @@ def KNN(app_data):
 
         player_profiles = [
             {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90}},
-            {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacked": 40, "slime rancher": 60}},
+            {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacking": 40, "slime rancher": 60}},
             {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80}},
-            {"label": "Soulslike", "gameData": {"elden ring": 200, "dark souls iii": 100, "sekiro: shadows die twice": 80, "lies of p": 70, "dead cells": 90, "Ori and the Blind Forest": 1.9}},
+            {"label": "Soulslike", "gameData": {"elden ring": 200, "dark souls iii": 100, "sekiro: shadows die twice": 80, "lies of p": 70, "dead cells": 90, "ori and the blind forest": 1.9}},
             {"label": "RPG", "gameData": {"baldurs gate 3": 180, "the witcher 3": 150, "cyberpunk 2077": 100, "starfield": 60}},
             {"label": "RTS", "gameData": {"age of empires ii": 150, "starcraft ii": 120, "manor lords": 80, "civilization vi": 110}},
             {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70}},
             {"label": "Sports", "gameData": {"fc 25": 200, "nba 2k25": 150, "madden nfl 25": 80, "rocket league": 120}},
-            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90,}},
+            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90}},
             {"label": "Survival/Sandbox", "gameData": {"minecraft": 200, "rust": 150, "ark survival ascended": 120, "terraria": 100}},
             {"label": "Immersive Sim", "gameData": {"deus ex": 80, "dishonored 2": 70, "prey": 90, "hitman 3": 110}}
         ]
@@ -260,83 +306,125 @@ def KNN(app_data):
 
 def KNN2(app_data):
     try:
-        import json
-        import math
-
-        with open('gameCache.json', 'r', encoding='utf-8') as f:
-            cache = json.load(f)
-
         user_games = app_data.get('Merged', {}).get('games', [])
-        user_profile = {"genres": {}, "tags": {}}
 
-        user_games_normalized = {n["name"].lower().strip() for n in user_games}
-        user_games_dict = {n["name"].lower().strip(): float(n.get("hours", 0)) for n in user_games}
-
-        # Build user profile (genres + tags)
-        for name, hours in user_games_dict.items():
-            if name in cache:
-                data = cache[name]
-
-                for g in data.get("genres", []):
-                    user_profile["genres"][g] = user_profile["genres"].get(g, 0) + hours
-
-                for t in data.get("tags", []):
-                    user_profile["tags"][t] = user_profile["tags"].get(t, 0) + (hours * 0.5)
+        user_games_normalized = {g["name"].lower().strip() for g in user_games}
+        user_games_dict = {
+            g["name"].lower().strip(): float(g.get("hours", 0))
+            for g in user_games
+        }
 
         player_profiles = [
             {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90}},
             {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacked": 40, "slime rancher": 60}},
             {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80}},
-            {"label": "Soulslike", "gameData": {"elden ring": 200, "dark souls iii": 100, "sekiro: shadows die twice": 80, "lies of p": 70}},
+            {"label": "Soulslike", "gameData": {"elden ring": 200, "dark souls iii": 100, "sekiro: shadows die twice": 80, "lies of p": 70, "dead cells": 90, "ori and the blind forest": 1.9}},
             {"label": "RPG", "gameData": {"baldurs gate 3": 180, "the witcher 3": 150, "cyberpunk 2077": 100, "starfield": 60}},
             {"label": "RTS", "gameData": {"age of empires ii": 150, "starcraft ii": 120, "manor lords": 80, "civilization vi": 110}},
             {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70}},
             {"label": "Sports", "gameData": {"fc 25": 200, "nba 2k25": 150, "madden nfl 25": 80, "rocket league": 120}},
-            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150}},
+            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90}},
             {"label": "Survival/Sandbox", "gameData": {"minecraft": 200, "rust": 150, "ark survival ascended": 120, "terraria": 100}},
             {"label": "Immersive Sim", "gameData": {"deus ex": 80, "dishonored 2": 70, "prey": 90, "hitman 3": 110}}
         ]
 
+        # Build shared game space
         total_games_list = set(user_games_normalized)
-
         for p in player_profiles:
-            total_games_list.update(p["gameData"].keys())
+            total_games_list.update(name.lower().strip() for name in p["gameData"].keys())
 
         total_games_list = sorted(list(total_games_list))
 
-        vector = []
-        total = sum(user_games_dict.values())
-
-        for t in total_games_list:
-            game_hours = user_games_dict.get(t, 0) / total if total > 0 else 0
-            vector.append(game_hours)
+        # User vector
+        total_user = sum(user_games_dict.values())
+        user_vector = []
+        for game_name in total_games_list:
+            value = user_games_dict.get(game_name, 0) / total_user if total_user > 0 else 0
+            user_vector.append(value)
 
         distances = []
 
         for p in player_profiles:
-            total_p = sum(p["gameData"].values())
+            total_profile = sum(p["gameData"].values())
 
-            vec = []
-            for t in total_games_list:
-                value = p["gameData"].get(t, 0) / total_p if total_p > 0 else 0
-                vec.append(value)
+            profile_vector = []
+            for game_name in total_games_list:
+                value = p["gameData"].get(game_name, 0) / total_profile if total_profile > 0 else 0
+                profile_vector.append(value)
 
-            dist = math.sqrt(sum((vector[i] - vec[i]) ** 2 for i in range(len(total_games_list))))
+            distance = math.sqrt(
+                sum((user_vector[i] - profile_vector[i]) ** 2 for i in range(len(total_games_list)))
+            )
 
             distances.append({
                 "label": p["label"],
-                "distance": dist,
+                "distance": round(distance, 4),
                 "data": p["gameData"]
             })
 
+        # Lower distance = better
         ranked = sorted(distances, key=lambda x: x["distance"])
         top_k = ranked[:3]
+        neighbor_names = [n["label"] for n in top_k]
+
+        # ---- Build adjacency data for 3D graph ----
+        game_adjacency_list = []
+        all_neighbor_games = set()
+
+        for n in top_k:
+            all_neighbor_games.update(name.lower().strip() for name in n["data"].keys())
+
+        for g_name in all_neighbor_games:
+            total_n1 = sum(top_k[0]["data"].values()) if len(top_k) > 0 else 1
+            total_n2 = sum(top_k[1]["data"].values()) if len(top_k) > 1 else 1
+            total_n3 = sum(top_k[2]["data"].values()) if len(top_k) > 2 else 1
+
+            coords = {
+                "x": (top_k[0]["data"].get(g_name, 0) / total_n1) * 100,
+                "y": (top_k[1]["data"].get(g_name, 0) / total_n2) * 100,
+                "z": (top_k[2]["data"].get(g_name, 0) / total_n3) * 100
+            }
+
+            owners = [
+                p["label"]
+                for p in player_profiles
+                if g_name in {k.lower().strip() for k in p["gameData"].keys()}
+            ]
+
+            active_neighbors = [
+                n["label"]
+                for n in top_k
+                if g_name in {k.lower().strip() for k in n["data"].keys()}
+            ]
+
+            pulls = [coords["x"], coords["y"], coords["z"]]
+            max_pull_index = pulls.index(max(pulls))
+            primary_neighbor = neighbor_names[max_pull_index]
+            strength = max(pulls)
+
+            game_adjacency_list.append({
+                "name": g_name,
+                "coords": coords,
+                "owned": g_name in user_games_normalized,
+                "group": primary_neighbor,
+                "groups": active_neighbors,
+                "all_owners": ", ".join(owners),
+                "strength": strength
+            })
+
+        # ---- Recommendation scoring ----
+        # Convert distance into closeness so nearer neighbors matter more
+        closeness_values = []
+        for n in top_k:
+            closeness = 1 / (1 + n["distance"])
+            closeness_values.append(closeness)
+
+        total_closeness = sum(closeness_values) if sum(closeness_values) > 0 else 1
 
         results = {}
 
-        for rank, neighbor in enumerate(top_k):
-            weight = 1 - (rank * 0.2)
-
+        for i, neighbor in enumerate(top_k):
+            weight = closeness_values[i] / total_closeness
             game_data = neighbor["data"]
             total_neighbor = sum(game_data.values())
 
@@ -344,44 +432,42 @@ def KNN2(app_data):
                 name_key = title.lower().strip()
 
                 if name_key not in user_games_normalized:
-
-                    # Taste score (same as before but scaled)
                     neighbor_relevance = (hours / total_neighbor) * 10
+                    final_score = neighbor_relevance * weight
 
-                    # Get cache data
-                    game_info = cache.get(name_key, {})
-
-                    # Quality score
-                    quality = game_info.get("metacritic", 70) / 10
-
-                    # Genre bonus
-                    genre_bonus = 0
-                    for g in game_info.get("genres", []):
-                        if g in user_profile["genres"]:
-                            genre_bonus += 1.0
-
-                    # Final weighted score
-                    w1, w2, w3 = 0.6, 0.2, 0.2
-                    base_score = (neighbor_relevance * w1) + (quality * w2) + (min(genre_bonus, 2) * w3)
-                    final_score = base_score * weight
-
-                    if name_key in results:
-                        results[name_key]["score"] += final_score
-                    else:
+                    if name_key not in results:
                         results[name_key] = {
                             "name": title,
-                            "score": final_score
+                            "score": 0,
+                            "contributions": {}
                         }
+
+                    results[name_key]["score"] += final_score
+                    results[name_key]["contributions"][neighbor["label"]] = final_score
 
         final = sorted(results.values(), key=lambda x: x["score"], reverse=True)
 
         for item in final:
+            total_contribution = sum(item["contributions"].values())
+
+            if total_contribution > 0:
+                for k in item["contributions"]:
+                    item["contributions"][k] /= total_contribution
+
+            for k in item["contributions"]:
+                item["contributions"][k] = round(item["contributions"][k], 2)
+
             item["score"] = round(item["score"], 2)
 
-        print(json.dumps(final[:10]))
+        print(json.dumps({
+            "recommendations": final,
+            "similarities": ranked,   # keeping the same key so frontend can reuse structure
+            "game_adjacency": game_adjacency_list,
+            "neighbors": neighbor_names
+        }))
 
     except Exception as e:
-        print(json.dumps({"error": f"KNN Engine Error: {str(e)}"}))
+        print(json.dumps({"error": f"KNN2 Engine Error: {str(e)}"}))
 
 if __name__ == "__main__":
     try:
