@@ -370,79 +370,106 @@ pythonButton.addEventListener("click", async () => {
 
 
 function drawAdjacencyGrid(result) {
-    const gamePoints = result.game_adjacency;
-    const neighbors = result.neighbors;
-    if (!gamePoints || !neighbors) return;
-
-    const dataTraces = [];
+    const gamePoints = result.game_adjacency || [];
+    const neighbors = result.neighbors || [];
+    if (!gamePoints.length || !neighbors.length) return;
 
     const owned = gamePoints.filter(g => g.owned);
     const recs = gamePoints.filter(g => !g.owned);
 
-    const getHover = (set) => set.map(g => `<b>${g.name}</b><br>Profiles: ${g.all_owners}<extra></extra>`);
+    const getHover = (set) =>
+        set.map(g => {
+            const groups = (g.groups || []).join(", ") || g.group || "None";
+            return `<b>${g.name}</b><br>Groups: ${groups}<extra></extra>`; // <br>Profiles: ${g.all_owners}
+        });
 
-    dataTraces.push({
-        x: owned.map(g => g.coords.x), y: owned.map(g => g.coords.y), z: owned.map(g => g.coords.z),
-        mode: 'markers', name: 'Your Games',
-        hovertext: getHover(owned), hovertemplate: '%{hovertext}',
-        marker: { size: 10, color: '#FFD700' }, type: 'scatter3d'
-    });
+    const dataTraces = [
+        {
+            x: owned.map(g => g.coords.x),
+            y: owned.map(g => g.coords.y),
+            z: owned.map(g => g.coords.z),
+            mode: "markers",
+            name: "Your Games",
+            hovertext: getHover(owned),
+            hovertemplate: "%{hovertext}",
+            marker: { size: 10, color: "#FFD700" },
+            type: "scatter3d"
+        },
+        {
+            x: recs.map(g => g.coords.x),
+            y: recs.map(g => g.coords.y),
+            z: recs.map(g => g.coords.z),
+            mode: "markers",
+            name: "Suggestions",
+            hovertext: getHover(recs),
+            hovertemplate: "%{hovertext}",
+            marker: { size: 7, color: "#00FFFF", opacity: 0.7 },
+            type: "scatter3d"
+        }
+    ];
 
-    dataTraces.push({
-        x: recs.map(g => g.coords.x), y: recs.map(g => g.coords.y), z: recs.map(g => g.coords.z),
-        mode: 'markers', name: 'Suggestions',
-        hovertext: getHover(recs), hovertemplate: '%{hovertext}',
-        marker: { size: 7, color: '#00FFFF', opacity: 0.7 }, type: 'scatter3d'
-    });
-
-
+    const seenPairs = new Set();
     const groupPairs = [];
+
     neighbors.forEach(neighborName => {
-        const groupOwned = owned.filter(g => g.group === neighborName);
-        const groupRecs = recs.filter(g => g.group === neighborName);
+        const groupOwned = owned.filter(g => (g.groups || []).includes(neighborName));
+        const groupRecs = recs.filter(g => (g.groups || []).includes(neighborName));
 
         groupOwned.forEach(oGame => {
             groupRecs.forEach(rGame => {
-                groupPairs.push({ oGame, rGame });
+                const pairKey = [oGame.name.toLowerCase(), rGame.name.toLowerCase(), neighborName]
+                    .join("|");
+
+                if (!seenPairs.has(pairKey)) {
+                    seenPairs.add(pairKey);
+                    groupPairs.push({
+                        oGame,
+                        rGame,
+                        neighborName,
+                        strength: rGame.strength || 0
+                    });
+                }
             });
         });
     });
 
-
-    const sortedPairs = [...groupPairs].sort((a, b) => (b.rGame.score || 0) - (a.rGame.score || 0));
-
+    const sortedPairs = [...groupPairs].sort((a, b) => b.strength - a.strength);
 
     sortedPairs.forEach((pair, index) => {
-        const normalized = (sortedPairs.length === 1) ? 1 : 1 - index / (sortedPairs.length - 1);
+        const normalized =
+            sortedPairs.length === 1 ? 1 : 1 - index / (sortedPairs.length - 1);
 
         dataTraces.push({
-            type: 'scatter3d',
-            mode: 'lines',
+            type: "scatter3d",
+            mode: "lines",
             x: [pair.oGame.coords.x, pair.rGame.coords.x],
             y: [pair.oGame.coords.y, pair.rGame.coords.y],
             z: [pair.oGame.coords.z, pair.rGame.coords.z],
             line: {
                 color: `rgba(0, 255, 255, ${0.2 + normalized * 0.8})`,
-                width: 1 + normalized * 5
+                width: 1 + normalized * 4
             },
             showlegend: false,
-            hoverinfo: 'none'
+            hovertemplate:
+                `<b>${pair.oGame.name}</b> → <b>${pair.rGame.name}</b><br>` +
+                `Shared group: ${pair.neighborName}<br>` +
+                `<extra></extra>`
         });
     });
 
     const layout = {
-        title: 'KNN - cosine',
-        paper_bgcolor: '#1a1a1a',
-        font: { color: 'white' },
+        title: "KNN - cosine",
+        paper_bgcolor: "#1a1a1a",
+        font: { color: "white" },
         scene: {
-            xaxis: { title: neighbors[0] || 'N1' },
-            yaxis: { title: neighbors[1] || 'N2' },
-            zaxis: { title: neighbors[2] || 'N3' }
+            xaxis: { title: neighbors[0] || "N1" },
+            yaxis: { title: neighbors[1] || "N2" },
+            zaxis: { title: neighbors[2] || "N3" }
         },
         margin: { l: 0, r: 0, b: 0, t: 40 }
     };
 
-    Plotly.newPlot('AdjacencyGrid', dataTraces, layout);
+    Plotly.newPlot("AdjacencyGrid", dataTraces, layout);
 }
 
 KNNCosineChart = null;
@@ -455,8 +482,8 @@ KNNButton.addEventListener("click", async () => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                ...appData, 
-                algorithmType: "KNN" 
+                ...appData,
+                algorithmType: "KNN"
             })
         });
 

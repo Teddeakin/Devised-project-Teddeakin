@@ -195,14 +195,6 @@ def KNN(app_data):
 
             active_neighbors = [n["label"] for n in top_k if g_name.lower().strip() in {k.lower().strip() for k in n["data"].keys()}]
 
-            game_adjacency_list.append({
-                "name": g_name,
-                "coords": coords,
-                "owned": g_name.lower().strip() in user_games_normalized,
-                "group": active_neighbors[0] if active_neighbors else "None",
-                "all_owners": ", ".join(owners) 
-            })
-
             pulls = [coords["x"], coords["y"], coords["z"]]
             max_pull_index = pulls.index(max(pulls))
             primary_neighbor = neighbor_names[max_pull_index]
@@ -214,6 +206,7 @@ def KNN(app_data):
                 "coords": coords,
                 "owned": g_name.lower().strip() in user_games_normalized,
                 "group": primary_neighbor, 
+                "groups": active_neighbors,
                 "all_owners": ", ".join(owners), 
                 "strength": strength
             })
