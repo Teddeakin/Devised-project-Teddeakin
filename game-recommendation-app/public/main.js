@@ -278,9 +278,47 @@ mergeButton.addEventListener("click", async () => {
 
 // Python -----------------------------------------------------------------
 
-let weightedChart = null; // storing the chart 
+function showWeightedDetails(game) {
+    const panel = document.getElementById("WeightedDetailsPanel");
+    if (!panel || !game) return;
 
-const pythonButton = document.getElementById("SendPythonBTN"); /// rename 
+    const genreDetails = (game.details?.genres || [])
+        .map(g => `<li>${g.name}: ${g.weighted} weighted points</li>`)
+        .join("");
+
+    const tagDetails = (game.details?.tags || [])
+        .map(t => `<li>${t.name}: ${t.weighted} weighted points</li>`)
+        .join("");
+
+    panel.innerHTML = `
+        <h3>${game.name}</h3>
+        <p><strong>Final Score:</strong> ${game.score}</p>
+
+        <p><strong>Formula:</strong></p>
+        <p>
+            (${game.formula?.genre_score_raw || 0} × ${game.formula?.weights?.genre || 0}) +
+            (${game.formula?.tag_score_raw || 0} × ${game.formula?.weights?.tag || 0}) +
+            (${game.formula?.quality_raw || 0} × ${game.formula?.weights?.metacritic || 0})
+        </p>
+
+        <p><strong>Breakdown:</strong></p>
+        <ul>
+            <li>Genre Total: ${game.breakdown?.genre_total || 0}</li>
+            <li>Tag Total: ${game.breakdown?.tag_total || 0}</li>
+            <li>Metacritic Total: ${game.breakdown?.metacritic_total || 0}</li>
+        </ul>
+
+        <p><strong>Genre Contributions:</strong></p>
+        <ul>${genreDetails || "<li>None</li>"}</ul>
+
+        <p><strong>Tag Contributions:</strong></p>
+        <ul>${tagDetails || "<li>None</li>"}</ul>
+    `;
+}
+
+let weightedChart = null;
+
+const pythonButton = document.getElementById("SendPythonBTN");
 
 pythonButton.addEventListener("click", async () => {
     try {
@@ -293,27 +331,27 @@ pythonButton.addEventListener("click", async () => {
         if (!response.ok) throw new Error("Server error");
 
         const result = await response.json();
-        // console.log("Algorithm Results:", result);
 
-        // Check if Python sent an error back
         if (result.error) {
             document.getElementById("Python-responce").innerText = "Error: " + result.error;
             return;
         }
 
-        const recommendationString = result
-            .slice(0, 3) // Take the top 3 recommendations
+        const topGames = result.slice(0, 10);
+
+        const recommendationString = topGames
+            .slice(0, 3)
             .map(game => `${game.name} (Match Score: ${game.score})`)
             .join(", ");
 
         document.getElementById("Python-responce").innerHTML = `Scores: ${recommendationString}`;
 
-        // get the x and y axis
-        const labels = result.map(game => game.name);
-        const scores = result.map(game => game.score);
-        // add something for colours?
+        const labels = topGames.map(game => game.name);
+        const genreTotals = topGames.map(game => game.breakdown?.genre_total || 0);
+        const tagTotals = topGames.map(game => game.breakdown?.tag_total || 0);
+        const metacriticTotals = topGames.map(game => game.breakdown?.metacritic_total || 0);
 
-        if (weightedChart) { // checks if there already a chart and removes it
+        if (weightedChart) {
             weightedChart.destroy();
         }
 
@@ -323,45 +361,91 @@ pythonButton.addEventListener("click", async () => {
             type: "bar",
             data: {
                 labels: labels,
-                datasets: [{
-                    label: "weighted Chart Score",
-                    data: scores,
-                    borderWidth: 1
-                }]
+                datasets: [
+                    {
+                        label: "Genre Contribution",
+                        data: genreTotals,
+                        borderWidth: 1
+                    },
+                    {
+                        label: "Tag Contribution",
+                        data: tagTotals,
+                        borderWidth: 1
+                    },
+                    {
+                        label: "Metacritic Contribution",
+                        data: metacriticTotals,
+                        borderWidth: 1
+                    }
+                ]
             },
             options: {
                 responsive: true,
+                onClick: (event, elements) => {
+                    if (!elements.length) return;
 
+                    const index = elements[0].index;
+                    showWeightedDetails(topGames[index]);
+                },
                 plugins: {
                     legend: {
                         display: true
                     },
                     tooltip: {
                         callbacks: {
+                            title: function (context) {
+                                return context[0].label;
+                            },
                             label: function (context) {
-                                return `Score: ${context.raw}`;
+                                const game = topGames[context.dataIndex];
+                                return [
+                                    `Final Score: ${game.score}`,
+                                    `Genre Total: ${game.breakdown?.genre_total || 0}`,
+                                    `Tag Total: ${game.breakdown?.tag_total || 0}`,
+                                    `Metacritic Total: ${game.breakdown?.metacritic_total || 0}`
+                                ];
+                            },
+                            afterBody: function (context) {
+                                const game = topGames[context[0].dataIndex];
+                                const genreLines = (game.details?.genres || []).map(
+                                    g => `Genre - ${g.name}: ${g.weighted}`
+                                );
+                                const tagLines = (game.details?.tags || []).map(
+                                    t => `Tag - ${t.name}: ${t.weighted}`
+                                );
+
+                                return [
+                                    "--- Details ---",
+                                    ...genreLines,
+                                    ...tagLines
+                                ];
                             }
                         }
                     }
                 },
-
                 scales: {
+                    x: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: "Games"
+                        }
+                    },
                     y: {
+                        stacked: true,
                         beginAtZero: true,
                         title: {
                             display: true,
                             text: "Match Strength"
                         }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: "Games"
-                        }
                     }
                 }
             }
-        })
+        });
+
+        if (topGames.length > 0) {
+            showWeightedDetails(topGames[0]);
+        }
 
     } catch (err) {
         console.error("Error running algorithm:", err);
