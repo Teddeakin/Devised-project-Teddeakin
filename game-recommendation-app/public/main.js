@@ -452,6 +452,8 @@ pythonButton.addEventListener("click", async () => {
     }
 });
 
+// KNN - Cosine -----------------------------------------------------------------------------
+
 
 function drawAdjacencyGrid(result) {
     const gamePoints = result.game_adjacency || [];
@@ -709,6 +711,8 @@ KNNButton.addEventListener("click", async () => {
     }
 })
 
+// KNN - Euclidean -----------------------------------------------------------------
+
 let KNNEuclideanChart = null;
 
 const KNNButton2 = document.getElementById("KNNAlgorithm2");
@@ -836,3 +840,44 @@ KNNButton2.addEventListener("click", async () => {
         console.error("Error running KNN2:", err);
     }
 });
+
+
+// Random Walk -------------------------------------------------------
+
+const RandomWalkBTN = document.getElementById("RandomWalk")
+
+RandomWalkBTN.addEventListener("click", async () => {
+    try {
+        const response = await fetch("/api/run-algorithm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                ...appData,
+                algorithmType: "RandomWalk"
+            })
+        });
+
+        if (!response.ok) throw new Error("Server error");
+
+        const result = await response.json();
+
+        if (result.error) {
+            document.getElementById("Python-responce").innerText = "Error: " + result.error;
+            return;
+        }
+
+        document.getElementById("RandomWalk-Response").innerHTML =
+            (result.recommendations || [])
+                .map(game => {
+                    const influences = Object.entries(game.influenced_by || {})
+                        .map(([name, value]) => `${name}: ${value}%`)
+                        .join(", ");
+
+                    return `${game.name} - ${game.score}<br>Influenced by: ${influences}`;
+                })
+                .join("<br><br>");
+
+    } catch (err) {
+        console.error("Error running RandomWalk:", err)
+    }
+})

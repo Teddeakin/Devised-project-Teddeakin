@@ -469,6 +469,253 @@ def KNN2(app_data):
     except Exception as e:
         print(json.dumps({"error": f"KNN2 Engine Error: {str(e)}"}))
 
+# Random Walk -------------------------------------------------------------------------------------
+
+def RandomWalk(app_data):
+
+    try:
+        user_games = app_data.get('Merged', {}).get('games', [])
+        user_games_normalized = {g["name"].lower().strip() for g in user_games}
+        user_games_dict = {
+            g["name"].lower().strip(): float(g.get("hours", 0))
+            for g in user_games
+        }
+
+        player_profiles = [
+            {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90}},
+            {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacking": 40, "slime rancher": 60}},
+            {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80}},
+            {"label": "Soulslike", "gameData": {"elden ring": 200, "dark souls iii": 100, "sekiro: shadows die twice": 80, "lies of p": 70, "dead cells": 90, "ori and the blind forest": 1.9}},
+            {"label": "RPG", "gameData": {"baldurs gate 3": 180, "the witcher 3": 150, "cyberpunk 2077": 100, "starfield": 60}},
+            {"label": "RTS", "gameData": {"age of empires ii": 150, "starcraft ii": 120, "manor lords": 80, "civilization vi": 110}},
+            {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70}},
+            {"label": "Sports", "gameData": {"fc 25": 200, "nba 2k25": 150, "madden nfl 25": 80, "rocket league": 120}},
+            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90}},
+            {"label": "Survival/Sandbox", "gameData": {"minecraft": 200, "rust": 150, "ark survival ascended": 120, "terraria": 100}},
+            {"label": "Immersive Sim", "gameData": {"deus ex": 80, "dishonored 2": 70, "prey": 90, "hitman 3": 110}}
+        ]
+
+        # stores how strongly each game is connected to others
+        graph = {}
+        # for front end visualisation, stores each unique game edge once and tracks which profile made that connection
+        edge_weights = {}
+
+        # Adding connections between games
+        def add_edge(a, b, weight, profile_label):
+            # makes it so that a game can't connect to itself
+            if a == b:
+                return
+            
+            # makes sure that both games exist in the graph
+            if a not in graph:
+                graph[a] = {}
+            if b not in graph:
+                graph[b] = {}
+            
+            # adds a weighted connection in both directions
+            graph[a][b] = graph[a].get(b, 0) + weight
+            graph[b][a] = graph[b].get(a, 0) + weight
+
+            edge_key = tuple(sorted([a, b]))
+
+            # if edge hasn't been recored yet add it
+            if edge_key not in edge_weights:
+                edge_weights[edge_key] = {
+                    "source": a,
+                    "target": b,
+                    "weight": 0,
+                    "profiles": set()
+                }
+            
+            # increase edge strength
+            edge_weights[edge_key]["weight"] += weight
+
+            # record what profile caused the connection
+            edge_weights[edge_key]["profiles"].add(profile_label)
+        
+
+        for profile in player_profiles:
+            
+            # get all of the games from the profile being looped through
+            games = list(profile["gameData"].keys())
+
+            # make each of the games in this profile related
+            for i in range(len(games)):
+                for j in range(i + 1, len(games)):
+
+                    game_a = games[i].lower().strip()
+                    game_b = games[j].lower().strip()
+
+                    # calculate connection strength - higher playtime creates stronger edges
+                    weight = (profile["gameData"][games[i]] + profile["gameData"][games[j]]) / 2
+
+                    # add the edge to the graph
+                    add_edge(game_a, game_b, weight, profile["label"])
+
+
+        # combines all the games form the graph with the users games
+        all_games = set(graph.keys()) | set(user_games_normalized)
+
+        # total hours from users games
+        total_hours = sum(user_games_dict.values())
+
+        # starting score for each game
+        initial_scores = {game: 0 for game in all_games}
+
+        # gives influence to owned games with a higher playtime getting more influence
+        if total_hours > 0:
+            for game, hours in user_games_dict.items():
+                initial_scores[game] = hours / total_hours
+
+        
+        scores = initial_scores.copy()
+
+        # tracks what contributed to each games score
+        contributions = {game: {} for game in all_games}
+
+        if total_hours > 0:
+            for game, hours in user_games_dict.items():
+                contributions[game][game] = hours / total_hours
+
+        # how much influence spreads through the graph
+        alpha = 0.6
+
+        # number of times influence spreads
+        iterations = 10
+
+        for _ in range(iterations):
+            propagated = {game: 0 for game in all_games}
+            propagated_contributions = {game: {} for game in all_games}
+
+            # first: spread influence from every game
+            for game in all_games:
+                neighbours = graph.get(game, {})
+
+                # if this game has no neighbours, keep its score where it is
+                if not neighbours:
+                    propagated[game] += scores.get(game, 0)
+
+                    for source_game, value in contributions.get(game, {}).items():
+                        propagated_contributions[game][source_game] = (
+                            propagated_contributions[game].get(source_game, 0) + value
+                        )
+
+                    continue
+
+                total_neighbours_weight = sum(neighbours.values())
+
+                if total_neighbours_weight == 0:
+                    continue
+
+                # spread total score and source contributions to neighbours
+                for neighbour, weight in neighbours.items():
+                    share_ratio = weight / total_neighbours_weight
+                    share_score = scores.get(game, 0) * share_ratio
+
+                    # spread overall score
+                    propagated[neighbour] += share_score
+
+                    # spread each source game's influence proportionally
+                    for source_game, value in contributions.get(game, {}).items():
+                        share_value = value * share_ratio
+                        propagated_contributions[neighbour][source_game] = (
+                            propagated_contributions[neighbour].get(source_game, 0) + share_value
+                        )
+
+            # second: apply damping AFTER all spreading is finished
+            new_scores = {}
+            new_contributions = {}
+
+            for game in all_games:
+                new_scores[game] = (
+                    (1 - alpha) * initial_scores.get(game, 0)
+                    + alpha * propagated.get(game, 0)
+                )
+
+                new_contributions[game] = {}
+
+                # keep some of the original contribution
+                for source_game, value in contributions.get(game, {}).items():
+                    retained = (1 - alpha) * value
+                    if retained > 0:
+                        new_contributions[game][source_game] = (
+                            new_contributions[game].get(source_game, 0) + retained
+                        )
+
+                # add the propagated contribution
+                for source_game, value in propagated_contributions.get(game, {}).items():
+                    spread = alpha * value
+                    if spread > 0:
+                        new_contributions[game][source_game] = (
+                            new_contributions[game].get(source_game, 0) + spread
+                        )
+
+            # update only once per iteration
+            scores = new_scores
+            contributions = new_contributions
+        
+        recommendations = []
+
+        for game, score in scores.items():
+            if game not in user_games_normalized:
+                source_breakdown = contributions.get(game, {})
+
+                sorted_sources = sorted(
+                    source_breakdown.items(),
+                    key=lambda x: x[1],
+                    reverse=True
+                )
+
+                total_source = sum(source_breakdown.values())
+
+                if total_source > 0:
+                    influenced_by_percent = {
+                        source: round((value / total_source) * 100, 2)
+                        for source, value in sorted_sources[:5]
+                    }
+                else:
+                    influenced_by_percent = {}
+
+                recommendations.append({
+                    "name": game,
+                    "score": round(score, 4),
+                    "influenced_by": influenced_by_percent
+                })
+
+        recommendations.sort(key=lambda x: x["score"], reverse=True)
+
+        # nodes = all games
+        graph_nodes = []
+        for game in all_games:
+            graph_nodes.append({
+                "id": game,
+                "label": game,
+                "owned": game in user_games_normalized,  # highlight owned games
+                "score": round(scores.get(game, 0), 4)   # node size/intensity
+            })
+
+        # edges = connections between games
+        graph_edges = []
+        for edge in edge_weights.values():
+            graph_edges.append({
+                "source": edge["source"],
+                "target": edge["target"],
+                "weight": round(edge["weight"], 2),   # strength of connection
+                "profiles": sorted(list(edge["profiles"]))  # which profiles created this link
+            })
+
+        print(json.dumps({
+            "recommendations": recommendations[:10],  # top 10 results
+            "graph_nodes": graph_nodes,
+            "graph_edges": graph_edges
+        }))
+       
+    except Exception as e:
+        print(json.dumps({"error": f"KNN2 Engine Error: {str(e)}"}))
+
+
+# ---------------------------------------------------------------------------------
+
 if __name__ == "__main__":
     try:
         input_raw = sys.stdin.read()
@@ -484,6 +731,8 @@ if __name__ == "__main__":
             KNN(app_data)
         elif algorithm_choice == "KNN2":
             KNN2(app_data)
+        elif algorithm_choice == "RandomWalk":
+            RandomWalk(app_data)
         else:
             main(app_data)
 
