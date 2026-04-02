@@ -852,81 +852,137 @@ function drawRandomWalkGraph(result) {
 
     if (!container) return;
 
+    const graphNodes = result.graph_nodes || [];
+    const graphEdges = result.graph_edges || [];
     const recommendations = result.recommendations || [];
+
     const recommendationMap = {};
     recommendations.forEach(rec => {
         recommendationMap[rec.name.toLowerCase()] = rec;
     });
 
-    const topRecommendedIds = new Set(
-        recommendations.slice(0, 10).map(rec => rec.name.toLowerCase())
+    const ownedIds = new Set(
+        graphNodes
+            .filter(node => node.owned)
+            .map(node => node.id.toLowerCase())
     );
 
-    const nodes = (result.graph_nodes || []).map(node => {
-        const id = node.id.toLowerCase();
-        const isOwned = node.owned;
-        const isRecommended = topRecommendedIds.has(id);
+    const topRecommendedIds = new Set(
+        recommendations
+            .slice(0, 8)
+            .map(rec => rec.name.toLowerCase())
+    );
 
-        let label = node.label;
-        let size = 15 + (node.score * 500);
+    // Keep support nodes that connect owned games to top recommendations
+    const supportNodeIds = new Set();
 
-        if (size < 12) size = 12;
-        if (size > 45) size = 45;
+    graphEdges.forEach(edge => {
+        const source = edge.source.toLowerCase();
+        const target = edge.target.toLowerCase();
 
-        let color = "#cccccc";
+        const sourceImportant = ownedIds.has(source) || topRecommendedIds.has(source);
+        const targetImportant = ownedIds.has(target) || topRecommendedIds.has(target);
 
-        if (isOwned) {
-            color = "#FFD700";
-        } else if (isRecommended) {
-            color = "#00FFFF";
+        // If one end is important, keep the other end as support
+        if (sourceImportant && !targetImportant) {
+            supportNodeIds.add(target);
+        }
+        if (targetImportant && !sourceImportant) {
+            supportNodeIds.add(source);
+        }
+    });
+
+    // Limit support nodes to strongest-scoring ones
+    const supportNodesRanked = graphNodes
+        .filter(node => supportNodeIds.has(node.id.toLowerCase()))
+        .sort((a, b) => (b.score || 0) - (a.score || 0))
+        .slice(0, 12);
+
+    const finalNodeIds = new Set([
+        ...ownedIds,
+        ...topRecommendedIds,
+        ...supportNodesRanked.map(node => node.id.toLowerCase())
+    ]);
+
+    const filteredNodes = graphNodes.filter(node =>
+        finalNodeIds.has(node.id.toLowerCase())
+    );
+
+    const filteredEdges = graphEdges.filter(edge => {
+        const source = edge.source.toLowerCase();
+        const target = edge.target.toLowerCase();
+
+        if (!finalNodeIds.has(source) || !finalNodeIds.has(target)) {
+            return false;
         }
 
+        // Keep edges if they touch owned or top-recommended nodes
+        return (
+            ownedIds.has(source) ||
+            ownedIds.has(target) ||
+            topRecommendedIds.has(source) ||
+            topRecommendedIds.has(target)
+        );
+    });
+
+    const nodes = filteredNodes.map(node => {
+        const id = node.id.toLowerCase();
+        const isOwned = ownedIds.has(id);
+        const isRecommended = topRecommendedIds.has(id);
+        const isSupport = !isOwned && !isRecommended;
+
+        let size = 14 + ((node.score || 0) * 900);
+        size = Math.max(12, Math.min(38, size));
+
+        let background = "#888888";
+        if (isOwned) background = "#FFD700";
+        if (isRecommended) background = "#00FFFF";
+
         return {
-            id: id,
-            label: label,
+            id,
+            label: node.label,
             value: size,
             color: {
-                background: color,
-                border: "#333333",
+                background,
+                border: isOwned || isRecommended ? "#ffffff" : "#333333",
                 highlight: {
-                    background: color,
-                    border: "#000000"
+                    background,
+                    border: "#ffffff"
                 }
             },
             borderWidth: isOwned || isRecommended ? 3 : 1,
             font: {
                 color: "#ffffff",
-                size: 14
+                size: isRecommended ? 16 : 13
             },
-            title: `${label}<br>Score: ${node.score}${isOwned ? "<br>Owned" : ""}`
+            title:
+                `${node.label}\n` +
+                `Score: ${node.score}\n` +
+                (isOwned ? "Owned game" : isRecommended ? "Top recommendation" : "Support node"),
+            group: isOwned ? "owned" : isRecommended ? "recommended" : "support"
         };
     });
 
-    const edges = (result.graph_edges || [])
-        .filter(edge => {
-            const source = edge.source.toLowerCase();
-            const target = edge.target.toLowerCase();
+    const edges = filteredEdges.map(edge => {
+        const source = edge.source.toLowerCase();
+        const target = edge.target.toLowerCase();
+        const weight = edge.weight || 1;
 
-            return topRecommendedIds.has(source) ||
-                   topRecommendedIds.has(target) ||
-                   nodes.find(n => n.id === source && n.color.background === "#FFD700") ||
-                   nodes.find(n => n.id === target && n.color.background === "#FFD700");
-        })
-        .map(edge => {
-            const weight = edge.weight || 1;
-            const width = Math.max(1, Math.min(8, weight / 40));
+        const width = Math.max(1, Math.min(6, weight / 50));
 
-            return {
-                from: edge.source.toLowerCase(),
-                to: edge.target.toLowerCase(),
-                width: width,
-                color: {
-                    color: "rgba(0,255,255,0.35)",
-                    highlight: "rgba(0,255,255,0.8)"
-                },
-                title: `Weight: ${edge.weight}<br>Profiles: ${(edge.profiles || []).join(", ")}`
-            };
-        });
+        return {
+            from: source,
+            to: target,
+            width,
+            color: {
+                color: "rgba(0, 255, 255, 0.28)",
+                highlight: "rgba(0, 255, 255, 0.85)"
+            },
+            title:
+                `Weight: ${edge.weight}\n` +
+                `Profiles: ${(edge.profiles || []).join(", ")}`
+        };
+    });
 
     const data = {
         nodes: new vis.DataSet(nodes),
@@ -934,6 +990,9 @@ function drawRandomWalkGraph(result) {
     };
 
     const options = {
+        layout: {
+            improvedLayout: true
+        },
         nodes: {
             shape: "dot",
             scaling: {
@@ -943,25 +1002,27 @@ function drawRandomWalkGraph(result) {
         },
         edges: {
             smooth: {
-                type: "continuous"
+                type: "dynamic"
             }
         },
         physics: {
             enabled: true,
             stabilization: {
-                iterations: 200
+                enabled: true,
+                iterations: 250
             },
             barnesHut: {
-                gravitationalConstant: -5000,
-                centralGravity: 0.2,
-                springLength: 140,
-                springConstant: 0.03,
-                damping: 0.09
+                gravitationalConstant: -3500,
+                centralGravity: 0.18,
+                springLength: 160,
+                springConstant: 0.025,
+                damping: 0.12
             }
         },
         interaction: {
             hover: true,
-            tooltipDelay: 150
+            tooltipDelay: 120,
+            navigationButtons: true
         }
     };
 
@@ -971,20 +1032,24 @@ function drawRandomWalkGraph(result) {
 
     randomWalkNetwork = new vis.Network(container, data, options);
 
+    randomWalkNetwork.once("stabilizationIterationsDone", function () {
+        randomWalkNetwork.setOptions({ physics: false });
+    });
+
     randomWalkNetwork.on("click", function (params) {
         if (!params.nodes.length) return;
 
         const nodeId = params.nodes[0];
-        const clickedNode = result.graph_nodes.find(n => n.id.toLowerCase() === nodeId);
+        const clickedNode = filteredNodes.find(n => n.id.toLowerCase() === nodeId);
         const recommendation = recommendationMap[nodeId];
 
-        const connectedEdges = (result.graph_edges || []).filter(edge =>
+        const connectedEdges = filteredEdges.filter(edge =>
             edge.source.toLowerCase() === nodeId || edge.target.toLowerCase() === nodeId
         );
 
-        const profileList = new Set();
+        const profileSet = new Set();
         connectedEdges.forEach(edge => {
-            (edge.profiles || []).forEach(profile => profileList.add(profile));
+            (edge.profiles || []).forEach(profile => profileSet.add(profile));
         });
 
         let influenceHTML = "<li>None</li>";
@@ -997,17 +1062,23 @@ function drawRandomWalkGraph(result) {
             }
         }
 
+        const linkedGames = connectedEdges.map(edge => {
+            const source = edge.source.toLowerCase();
+            const target = edge.target.toLowerCase();
+            return source === nodeId ? edge.target : edge.source;
+        });
+
         detailsPanel.innerHTML = `
             <h3>${clickedNode?.label || nodeId}</h3>
             <p><strong>Owned:</strong> ${clickedNode?.owned ? "Yes" : "No"}</p>
             <p><strong>Final Score:</strong> ${clickedNode?.score ?? "N/A"}</p>
-            <p><strong>Connected Profiles:</strong> ${[...profileList].join(", ") || "None"}</p>
+            <p><strong>Connected Profiles:</strong> ${[...profileSet].join(", ") || "None"}</p>
+            <p><strong>Connected Games:</strong> ${linkedGames.join(", ") || "None"}</p>
             <p><strong>Top Influence Sources:</strong></p>
             <ul>${influenceHTML}</ul>
         `;
     });
 }
-
 const RandomWalkBTN = document.getElementById("RandomWalk");
 
 RandomWalkBTN.addEventListener("click", async () => {
