@@ -844,7 +844,171 @@ KNNButton2.addEventListener("click", async () => {
 
 // Random Walk -------------------------------------------------------
 
-const RandomWalkBTN = document.getElementById("RandomWalk")
+let randomWalkNetwork = null;
+
+function drawRandomWalkGraph(result) {
+    const container = document.getElementById("RandomWalkGraph");
+    const detailsPanel = document.getElementById("RandomWalkDetails");
+
+    if (!container) return;
+
+    const recommendations = result.recommendations || [];
+    const recommendationMap = {};
+    recommendations.forEach(rec => {
+        recommendationMap[rec.name.toLowerCase()] = rec;
+    });
+
+    const topRecommendedIds = new Set(
+        recommendations.slice(0, 10).map(rec => rec.name.toLowerCase())
+    );
+
+    const nodes = (result.graph_nodes || []).map(node => {
+        const id = node.id.toLowerCase();
+        const isOwned = node.owned;
+        const isRecommended = topRecommendedIds.has(id);
+
+        let label = node.label;
+        let size = 15 + (node.score * 500);
+
+        if (size < 12) size = 12;
+        if (size > 45) size = 45;
+
+        let color = "#cccccc";
+
+        if (isOwned) {
+            color = "#FFD700";
+        } else if (isRecommended) {
+            color = "#00FFFF";
+        }
+
+        return {
+            id: id,
+            label: label,
+            value: size,
+            color: {
+                background: color,
+                border: "#333333",
+                highlight: {
+                    background: color,
+                    border: "#000000"
+                }
+            },
+            borderWidth: isOwned || isRecommended ? 3 : 1,
+            font: {
+                color: "#ffffff",
+                size: 14
+            },
+            title: `${label}<br>Score: ${node.score}${isOwned ? "<br>Owned" : ""}`
+        };
+    });
+
+    const edges = (result.graph_edges || [])
+        .filter(edge => {
+            const source = edge.source.toLowerCase();
+            const target = edge.target.toLowerCase();
+
+            return topRecommendedIds.has(source) ||
+                   topRecommendedIds.has(target) ||
+                   nodes.find(n => n.id === source && n.color.background === "#FFD700") ||
+                   nodes.find(n => n.id === target && n.color.background === "#FFD700");
+        })
+        .map(edge => {
+            const weight = edge.weight || 1;
+            const width = Math.max(1, Math.min(8, weight / 40));
+
+            return {
+                from: edge.source.toLowerCase(),
+                to: edge.target.toLowerCase(),
+                width: width,
+                color: {
+                    color: "rgba(0,255,255,0.35)",
+                    highlight: "rgba(0,255,255,0.8)"
+                },
+                title: `Weight: ${edge.weight}<br>Profiles: ${(edge.profiles || []).join(", ")}`
+            };
+        });
+
+    const data = {
+        nodes: new vis.DataSet(nodes),
+        edges: new vis.DataSet(edges)
+    };
+
+    const options = {
+        nodes: {
+            shape: "dot",
+            scaling: {
+                min: 10,
+                max: 40
+            }
+        },
+        edges: {
+            smooth: {
+                type: "continuous"
+            }
+        },
+        physics: {
+            enabled: true,
+            stabilization: {
+                iterations: 200
+            },
+            barnesHut: {
+                gravitationalConstant: -5000,
+                centralGravity: 0.2,
+                springLength: 140,
+                springConstant: 0.03,
+                damping: 0.09
+            }
+        },
+        interaction: {
+            hover: true,
+            tooltipDelay: 150
+        }
+    };
+
+    if (randomWalkNetwork) {
+        randomWalkNetwork.destroy();
+    }
+
+    randomWalkNetwork = new vis.Network(container, data, options);
+
+    randomWalkNetwork.on("click", function (params) {
+        if (!params.nodes.length) return;
+
+        const nodeId = params.nodes[0];
+        const clickedNode = result.graph_nodes.find(n => n.id.toLowerCase() === nodeId);
+        const recommendation = recommendationMap[nodeId];
+
+        const connectedEdges = (result.graph_edges || []).filter(edge =>
+            edge.source.toLowerCase() === nodeId || edge.target.toLowerCase() === nodeId
+        );
+
+        const profileList = new Set();
+        connectedEdges.forEach(edge => {
+            (edge.profiles || []).forEach(profile => profileList.add(profile));
+        });
+
+        let influenceHTML = "<li>None</li>";
+        if (recommendation && recommendation.influenced_by) {
+            const entries = Object.entries(recommendation.influenced_by);
+            if (entries.length) {
+                influenceHTML = entries
+                    .map(([name, value]) => `<li>${name}: ${value}%</li>`)
+                    .join("");
+            }
+        }
+
+        detailsPanel.innerHTML = `
+            <h3>${clickedNode?.label || nodeId}</h3>
+            <p><strong>Owned:</strong> ${clickedNode?.owned ? "Yes" : "No"}</p>
+            <p><strong>Final Score:</strong> ${clickedNode?.score ?? "N/A"}</p>
+            <p><strong>Connected Profiles:</strong> ${[...profileList].join(", ") || "None"}</p>
+            <p><strong>Top Influence Sources:</strong></p>
+            <ul>${influenceHTML}</ul>
+        `;
+    });
+}
+
+const RandomWalkBTN = document.getElementById("RandomWalk");
 
 RandomWalkBTN.addEventListener("click", async () => {
     try {
@@ -862,7 +1026,7 @@ RandomWalkBTN.addEventListener("click", async () => {
         const result = await response.json();
 
         if (result.error) {
-            document.getElementById("Python-responce").innerText = "Error: " + result.error;
+            document.getElementById("RandomWalk-Response").innerText = "Error: " + result.error;
             return;
         }
 
@@ -873,11 +1037,13 @@ RandomWalkBTN.addEventListener("click", async () => {
                         .map(([name, value]) => `${name}: ${value}%`)
                         .join(", ");
 
-                    return `${game.name} - ${game.score}<br>Influenced by: ${influences}`;
+                    return `${game.name} - ${game.score}<br><small>Influenced by: ${influences}</small>`;
                 })
                 .join("<br><br>");
 
+        drawRandomWalkGraph(result);
+
     } catch (err) {
-        console.error("Error running RandomWalk:", err)
+        console.error("Error running RandomWalk:", err);
     }
-})
+});

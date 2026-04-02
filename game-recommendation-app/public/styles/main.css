@@ -3,3 +3,12 @@ main {
     grid-template-columns: auto auto;
     
 }
+
+#RandomWalkDetails {
+    margin-top: 16px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #111;
+    color: white;
+}
