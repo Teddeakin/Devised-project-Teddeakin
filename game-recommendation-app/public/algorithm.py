@@ -1,6 +1,5 @@
 import sys
 import json
-import os
 import io
 import math
 
@@ -14,15 +13,18 @@ def main(app_data):
             cache = json.load(f)
 
         user_games = app_data.get('Merged', {}).get('games', [])
-        
+
+        # store owned games in a set so they can be filtered out later
+        owned_games = {game["name"].lower().strip() for game in user_games}
+
         user_profile = {"genres": {}, "tags": {}}
         total_hours = 0
 
         for game in user_games:
             name_key = game['name'].lower().strip() # normalise the name(s)
             hours = float(game.get('hours', 0)) # get playtime as a number
-            total_hours += hours 
-            
+            total_hours += hours
+
             if name_key in cache:
                 data = cache[name_key] # looking through teh cache to find the data for the namekey
 
@@ -77,65 +79,112 @@ def main(app_data):
             {"name": "Dishonored 2", "genres": ["action", "adventure"], "tags": ["stealth", "immersive-sim"], "metacritic": 88},
             {"name": "Prey", "genres": ["action", "shooter"], "tags": ["sci-fi", "immersive-sim"], "metacritic": 82},
             {"name": "Hitman 3", "genres": ["action", "stealth"], "tags": ["assassin", "sandbox"], "metacritic": 87}
-    ]
+        ]
+
+        # make generic genres contribute less because they show up in lots of games
+        genre_penalty = {
+            "action": 0.65,
+            "rpg": 0.65,
+            "adventure": 0.75,
+            "simulation": 0.8,
+            "sports": 0.75,
+            "strategy": 0.8,
+            "shooter": 0.75
+        }
+
+        # get all metacritic scores from the candidates so they can be scaled relative to each other
+        candidate_metas = [g["metacritic"] for g in candidates if g.get("metacritic") is not None]
+        min_meta = min(candidate_metas) if candidate_metas else 0
+        max_meta = max(candidate_metas) if candidate_metas else 100
+        meta_range = max(max_meta - min_meta, 1) # prevents division by 0 if all metas are the same
+
+        # get the biggest profile values so genres/tags can be normalised down to a more equal scale
+        max_genre_profile = max(user_profile["genres"].values(), default=1)
+        max_tag_profile = max(user_profile["tags"].values(), default=1)
 
         results = []
 
         for game in candidates: # look through each of potential candidates
+            name_key = game["name"].lower().strip()
 
-            genre_score = 0
-            for g in game['genres']: # look at the genres in the candidates
-                genre_score += user_profile["genres"].get(g, 0) # finding the genre in user profiles and adding the genre score calculated earlier (increases for both genres)
-  
-            tag_score = 0
-            for t in game['tags']:
-                tag_score += user_profile["tags"].get(t, 0)
-            
-            w1, w2, w3 = 0.5, 0.3, 0.2
-            quality = game['metacritic'] / 10 # looking for the metacritic score for that game
-            
-            final_score = (genre_score * w1) + (tag_score * w2) + (quality * w3)
+            # skip games the user already owns so they can't be recommended back
+            if name_key in owned_games:
+                continue
 
+            genre_score_raw = 0
             genre_details = []
-            for g in game["genres"]:
-                raw_value = user_profile["genres"].get(g, 0)
+
+            for g in game['genres']: # look at the genres in the candidates
+                raw_value = user_profile["genres"].get(g, 0) # find that genre in the users profile
+                penalty = genre_penalty.get(g, 1.0) # if its a broad genre reduce how much it is worth
+                adjusted_value = raw_value * penalty # create the reduced genre value
+
+                genre_score_raw += adjusted_value # add the adjusted genre score instead of the full one
+
                 if raw_value > 0:
                     genre_details.append({
                         "name": g,
                         "raw": round(raw_value, 2),
-                        "weighted": round(raw_value * w1, 2)
+                        "adjusted": round(adjusted_value, 2),
+                        "weighted": 0 # fill this in later once the normalising and weight has been applied
                     })
-            
+
+            tag_score_raw = 0
             tag_details = []
-            for t in game["tags"]:
-                raw_value = user_profile["tags"].get(t, 0)
+
+            for t in game['tags']:
+                raw_value = user_profile["tags"].get(t, 0) # find the tag in the user profile and add it to the score
+                tag_score_raw += raw_value
+
                 if raw_value > 0:
                     tag_details.append({
                         "name": t,
                         "raw": round(raw_value, 2),
-                        "weighted": round(raw_value * w2, 2)
+                        "weighted": 0 # fill this in later once the normalising and weight has been applied
                     })
 
-            genre_weighted = round(genre_score * w1, 2)
-            tag_weighted = round(tag_score * w2, 2)
-            metacritic_weighted = round(quality * w3, 2)
+            # normalise the genre and tag values so they are on a similar scale
+            genre_score = genre_score_raw / max_genre_profile if max_genre_profile > 0 else 0
+            tag_score = tag_score_raw / max_tag_profile if max_tag_profile > 0 else 0
+
+            # scale metacritic relative to the range of candidate games so it actually contributes
+            quality = (game['metacritic'] - min_meta) / meta_range if game.get("metacritic") is not None else 0
+
+            # genre still matters most, then tag, but metacritic now has a bit more influence
+            w1, w2, w3 = 0.45, 0.30, 0.25
+
+            genre_weighted = genre_score * w1
+            tag_weighted = tag_score * w2
+            metacritic_weighted = quality * w3
+
+            final_score = genre_weighted + tag_weighted + metacritic_weighted
+
+            # work out each genres weighted amount after the adjusting + normalising
+            for item in genre_details:
+                adjusted_normalized = (item["adjusted"] / max_genre_profile) if max_genre_profile > 0 else 0
+                item["weighted"] = round(adjusted_normalized * w1, 4)
+
+            # do the same for tags but without the genre penalty part
+            for item in tag_details:
+                normalized_tag = (item["raw"] / max_tag_profile) if max_tag_profile > 0 else 0
+                item["weighted"] = round(normalized_tag * w2, 4)
 
             results.append({
                 "name": game["name"],
-                "score": round(final_score, 2),
+                "score": round(final_score, 4),
                 "breakdown": {
-                    "genre_total": genre_weighted,
-                    "tag_total": tag_weighted,
-                    "metacritic_total": metacritic_weighted
+                    "genre_total": round(genre_weighted, 4),
+                    "tag_total": round(tag_weighted, 4),
+                    "metacritic_total": round(metacritic_weighted, 4)
                 },
                 "details": {
                     "genres": genre_details,
                     "tags": tag_details
                 },
                 "formula": {
-                    "genre_score_raw": round(genre_score, 2),
-                    "tag_score_raw": round(tag_score, 2),
-                    "quality_raw": round(quality, 2),
+                    "genre_score_raw": round(genre_score_raw, 2),
+                    "tag_score_raw": round(tag_score_raw, 2),
+                    "quality_raw": round(quality, 4),
                     "weights": {
                         "genre": w1,
                         "tag": w2,
