@@ -588,6 +588,9 @@ def RandomWalk(app_data):
             # get all of the games from the profile being looped through
             games = list(profile["gameData"].keys())
 
+            # get the total profile hours so the edges can be based on relative strength instead of raw numbers
+            total_profile_hours = sum(profile["gameData"].values())
+
             # make each of the games in this profile related
             for i in range(len(games)):
                 for j in range(i + 1, len(games)):
@@ -595,8 +598,10 @@ def RandomWalk(app_data):
                     game_a = games[i].lower().strip()
                     game_b = games[j].lower().strip()
 
-                    # calculate connection strength - higher playtime creates stronger edges
-                    weight = (profile["gameData"][games[i]] + profile["gameData"][games[j]]) / 2
+                    # calculate connection strength - now using each games share of this profile so one profile doesn't overpower the others
+                    weight_a = profile["gameData"][games[i]] / total_profile_hours if total_profile_hours > 0 else 0
+                    weight_b = profile["gameData"][games[j]] / total_profile_hours if total_profile_hours > 0 else 0
+                    weight = (weight_a + weight_b) / 2
 
                     # add the edge to the graph
                     add_edge(game_a, game_b, weight, profile["label"])
@@ -605,16 +610,22 @@ def RandomWalk(app_data):
         # combines all the games form the graph with the users games
         all_games = set(graph.keys()) | set(user_games_normalized)
 
-        # total hours from users games
-        total_hours = sum(user_games_dict.values())
+        # only keep user games that are actually in the graph so the walk doesn't waste score on disconnected games
+        connected_user_games = {
+            game: hours for game, hours in user_games_dict.items()
+            if game in graph
+        }
+
+        # total hours from users games that can actually spread influence
+        connected_total_hours = sum(connected_user_games.values())
 
         # starting score for each game
         initial_scores = {game: 0 for game in all_games}
 
         # gives influence to owned games with a higher playtime getting more influence
-        if total_hours > 0:
-            for game, hours in user_games_dict.items():
-                initial_scores[game] = hours / total_hours
+        if connected_total_hours > 0:
+            for game, hours in connected_user_games.items():
+                initial_scores[game] = hours / connected_total_hours
 
         
         scores = initial_scores.copy()
@@ -622,9 +633,9 @@ def RandomWalk(app_data):
         # tracks what contributed to each games score
         contributions = {game: {} for game in all_games}
 
-        if total_hours > 0:
-            for game, hours in user_games_dict.items():
-                contributions[game][game] = hours / total_hours
+        if connected_total_hours > 0:
+            for game, hours in connected_user_games.items():
+                contributions[game][game] = hours / connected_total_hours
 
         # how much influence spreads through the graph
         alpha = 0.6
@@ -731,6 +742,9 @@ def RandomWalk(app_data):
                     "influenced_by": influenced_by_percent
                 })
 
+        # remove very weak recommendations so only meaningful ones are shown
+        recommendations = [r for r in recommendations if r["score"] > 0.001]
+
         recommendations.sort(key=lambda x: x["score"], reverse=True)
 
         # nodes = all games
@@ -749,7 +763,7 @@ def RandomWalk(app_data):
             graph_edges.append({
                 "source": edge["source"],
                 "target": edge["target"],
-                "weight": round(edge["weight"], 2),   # strength of connection
+                "weight": round(edge["weight"], 4),   # strength of connection
                 "profiles": sorted(list(edge["profiles"]))  # which profiles created this link
             })
 

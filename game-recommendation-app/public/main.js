@@ -533,7 +533,7 @@ function drawAdjacencyGrid(result) {
             z: [pair.oGame.coords.z, pair.rGame.coords.z],
             line: {
                 color: `rgba(0, 255, 255, ${0.2 + normalized * 0.8})`,
-                width: 1 + normalized * 4
+                width: 1 + normalized * 10
             },
             showlegend: false,
             hovertemplate:
@@ -963,19 +963,31 @@ function drawRandomWalkGraph(result) {
         };
     });
 
+    const edgeWeightsOnly = filteredEdges.map(edge => edge.weight || 1);
+    const minEdgeWeight = Math.min(...edgeWeightsOnly);
+    const maxEdgeWeight = Math.max(...edgeWeightsOnly);
+    const edgeWeightRange = Math.max(maxEdgeWeight - minEdgeWeight, 1);
+
     const edges = filteredEdges.map(edge => {
         const source = edge.source.toLowerCase();
         const target = edge.target.toLowerCase();
         const weight = edge.weight || 1;
 
-        const width = Math.max(1, Math.min(6, weight / 50));
+        // scale each edge between a minimum and maximum thickness
+        const normalizedWeight = (weight - minEdgeWeight) / edgeWeightRange;
+
+        // increase this range to make the differences more obvious
+        const minWidth = 1;
+        const maxWidth = 18;
+
+        const width = minWidth + (normalizedWeight * (maxWidth - minWidth));
 
         return {
             from: source,
             to: target,
             width,
             color: {
-                color: "rgba(0, 255, 255, 0.28)",
+                color: "rgba(0, 255, 255, 0.7)",
                 highlight: "rgba(0, 255, 255, 0.85)"
             },
             title:
