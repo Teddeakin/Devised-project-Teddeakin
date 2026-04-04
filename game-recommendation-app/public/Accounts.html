@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>account page</title>
+    <title>Home page</title>
     <link rel="stylesheet" href="styles/main.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.30.0.min.js" charset="utf-8"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="main.js" defer></script>
 </head>
 
@@ -18,81 +19,103 @@
             account input
         </h1>
         <a href="Library.html">library page</a>
+        <nav>
+            <a href="">Home</a>
+            <a href="#Steam">Steam</a>
+            <a href="#Xbox">Xbox</a>
+            <a href="#Playstation">Playstation</a>
+
+            <a href="">Recommendation</a>
+            <a href="">Weighted</a>
+            <a href="">KNN</a>
+            <a href="">Random Walk</a>
+        </nav>
     </header>
 
     <main>
+        <section id="Accounts">
 
-        <section class="Steam">
-            <h2>
-                Steam input
-            </h2>
+            <section id="Steam">
+                <h2>
+                    Steam input
+                </h2>
 
-            <input type="text" id="SteamIdInput" placeholder="Enter SteamID64">
-            <button id="SteamSearchBtn">Search steam</button>
-            <button id="SteamDeleteBtn">X</button>
+                <input type="text" id="SteamIdInput" placeholder="Enter SteamID64">
+                <button id="SteamSearchBtn">Search steam</button>
+                <button id="SteamDeleteBtn">X</button>
+                <Div class="DropdownLibrary">
+                    <p id="Steam-info"> </p>
+                </Div>
+            </section>
+            <section id="Xbox">
+                <h2>
+                    Xbox input
+                </h2>
 
-            <p id="Steam-info"> </p>
+                <input type="text" id="XboxGamertagInput" placeholder="Enter Xbox gamertag">
+                <button id="XboxSearchBtn">Search xbox</button>
+                <button id="SteamDeleteBtn">X</button>
+                <Div class="DropdownLibrary">
+                    <p id="Xbox-info"> </p>
+                </Div>
+            </section>
+            <section id="Playstation">
+                <h2>
+                    Playstation input
+                </h2>
+
+                <input type="text" id="PlaystationUserIdInput" placeholder="Enter Playstation account Id">
+                <button id="PlaystationSearchBtn">Search Playstation</button>
+                <button id="SteamDeleteBtn">X</button>
+                <Div class="DropdownLibrary">
+                    <p id="Playstation-info"> </p>
+                </Div>
+            </section>
+            <section id="Merge">
+                <button id="MergeGamesBtn">Merge</button>
+                <Div class="DropdownLibrary">
+                    <p id="Merged-info"></p>
+                </Div>
+            </section>
         </section>
-        <section class="Xbox">
-            <h2>
-                Xbox input
-            </h2>
 
-            <input type="text" id="XboxGamertagInput" placeholder="Enter Xbox gamertag">
-            <button id="XboxSearchBtn">Search xbox</button>
-            <button id="SteamDeleteBtn">X</button>
-
-            <p id="Xbox-info"> </p>
-        </section>
-        <section class="Playstation">
-            <h2>
-                Playstation input
-            </h2>
-
-            <input type="text" id="PlaystationUserIdInput" placeholder="Enter Playstation account Id">
-            <button id="PlaystationSearchBtn">Search Playstation</button>
-            <button id="SteamDeleteBtn">X</button>
-
-            <p id="Playstation-info"> </p>
-        </section>
-        <section class="Merge">
-            <button id="MergeGamesBtn">Merge</button>
-            <p id="Merged-info"></p>
-        </section>
-
-        <section class="Algorithms">
-            <button id="SendPythonBTN">Weighted Algorithm</button>
-            <p id="Python-responce"></p> <!-- need to change the names of these -->
-            <canvas id="WeightedLinearChart"></canvas>
-            <div id="WeightedDetailsPanel"></div>
-
-            <button id="KNNAlgorithm">KNN Algorithm - Cosine</button>
-            <p id="KNN-responce"></p>
-            <canvas id="CosineChart"></canvas>
-            <div id="AdjacencyGrid" style="width:100%; height:600px; background: #1a1a1a;"></div>
-
-            <button id="KNNAlgorithm2">KNN Algorithm - Euclidean</button>
-            <p id="KNN-responce2"></p>
-            <canvas id="EuclideanChart"></canvas>
-
-            <button id="RandomWalk">Random Walk</button>
-            <p id="RandomWalk-Response"></p>
-            <div style="margin: 10px 0; color: rgb(0, 0, 0);">
-                <span
-                    style="display:inline-block; width:12px; height:12px; background:#FFD700; border-radius:50%; margin-right:6px;"></span>
-                Owned
-                <span
-                    style="display:inline-block; width:12px; height:12px; background:#00FFFF; border-radius:50%; margin:0 6px 0 18px;"></span>
-                Recommended
-                <span
-                    style="display:inline-block; width:12px; height:12px; background:#888888; border-radius:50%; margin:0 6px 0 18px;"></span>
-                Support
-            </div>
-            <div id="RandomWalkGraph"
-                style="width: 100%; height: 650px; border: 1px solid #444; border-radius: 8px; background: #111;"></div>
-            <div id="RandomWalkDetails"
-                style="margin-top: 16px; padding: 14px; border: 1px solid #444; border-radius: 8px; background: #111; color: white;">
-            </div>
+        <section id="Algorithms">
+            <section id="WeightedLinearSection">
+                <button id="SendPythonBTN">Weighted Algorithm</button>
+                <p id="Python-responce"></p> <!-- need to change the names of these -->
+                <canvas id="WeightedLinearChart"></canvas>
+                <div id="WeightedDetailsPanel"></div>
+            </section>
+            <section id="KNNSection">
+                <button id="KNNAlgorithm">KNN Algorithm - Cosine</button>
+                <p id="KNN-responce"></p>
+                <canvas id="CosineChart"></canvas>
+                <div id="AdjacencyGrid" style="width:100%; height:600px; background: #1a1a1a;"></div>
+                <button id="KNNAlgorithm2">KNN Algorithm - Euclidean</button>
+                <p id="KNN-responce2"></p>
+                <canvas id="EuclideanChart"></canvas>
+            </section>
+            <section id="RandomWalkSection">
+                <button id="RandomWalk">Random Walk</button>
+                <p id="RandomWalk-Response"></p>
+                <div style="margin: 10px 0; color: rgb(0, 0, 0);">
+                    <span
+                        style="display:inline-block; width:12px; height:12px; background:#FFD700; border-radius:50%; margin-right:6px;"></span>
+                    Owned
+                    <span
+                        style="display:inline-block; width:12px; height:12px; background:#00FFFF; border-radius:50%; margin:0 6px 0 18px;"></span>
+                    Recommended
+                    <span
+                        style="display:inline-block; width:12px; height:12px; background:#888888; border-radius:50%; margin:0 6px 0 18px;"></span>
+                    Support
+                </div>
+                <div id="RandomWalkGraph"
+                    style="width: 100%; height: 650px; border: 1px solid #444; border-radius: 8px; background: #111;">
+                </div>
+                <div id="RandomWalkDetails"
+                    style="margin-top: 16px; padding: 14px; border: 1px solid #444; border-radius: 8px; background: #111; color: white;">
+                </div>
+            </section>
         </section>
     </main>
 
