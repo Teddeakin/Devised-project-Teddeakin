@@ -212,17 +212,26 @@ def KNN(app_data):
         user_games_dict = {n["name"].lower().strip(): float(n.get("hours", 0)) for n in user_games}
 
         player_profiles = [
-            {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90}},
-            {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacking": 40, "slime rancher": 60}},
-            {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80}},
+            {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90, "call of duty: warzone": 140, "rainbow six siege": 110}},
+            {"label": "Hero Shooter", "gameData": {"valorant": 120, "overwatch 2": 150, "apex legends": 100, "marvel rivals": 80, "team fortress 2": 70, "paladins": 60}},
+            {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacking": 40, "slime rancher": 60, "spiritfarer": 70, "a little to the left": 35}},
+            {"label": "Life Sim / Farming", "gameData": {"stardew valley": 140, "coral island": 90, "disney dreamlight valley": 100, "my time at sandrock": 80, "story of seasons": 70, "sun haven": 75}},
+            {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80, "risk of rain 2": 85, "enter the gungeon": 70}},
+            {"label": "Deckbuilder / Strategy Roguelike", "gameData": {"slay the spire": 140, "balatro": 110, "monster train": 90, "inscryption": 80, "wildfrost": 60, "across the obelisk": 50}},
             {"label": "Soulslike", "gameData": {"elden ring": 200, "dark souls iii": 100, "sekiro: shadows die twice": 80, "lies of p": 70, "dead cells": 90, "ori and the blind forest": 1.9}},
-            {"label": "RPG", "gameData": {"baldurs gate 3": 180, "the witcher 3": 150, "cyberpunk 2077": 100, "starfield": 60}},
-            {"label": "RTS", "gameData": {"age of empires ii": 150, "starcraft ii": 120, "manor lords": 80, "civilization vi": 110}},
-            {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70}},
-            {"label": "Sports", "gameData": {"fc 25": 200, "nba 2k25": 150, "madden nfl 25": 80, "rocket league": 120}},
-            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90}},
-            {"label": "Survival/Sandbox", "gameData": {"minecraft": 200, "rust": 150, "ark survival ascended": 120, "terraria": 100}},
-            {"label": "Immersive Sim", "gameData": {"deus ex": 80, "dishonored 2": 70, "prey": 90, "hitman 3": 110}}
+            {"label": "Action RPG", "gameData": {"elden ring": 150, "the witcher 3": 140, "monster hunter: world": 110, "nioh 2": 80, "dragon's dogma 2": 70, "dark souls iii": 90}},
+            {"label": "CRPG / Narrative RPG", "gameData": {"baldur's gate 3": 180, "divinity: original sin 2": 130, "disco elysium": 90, "pillars of eternity": 70, "pathfinder: wrath of the righteous": 60, "dragon age: origins": 80}},
+            {"label": "Open World RPG", "gameData": {"the witcher 3": 150, "cyberpunk 2077": 100, "starfield": 60, "skyrim": 170, "fallout 4": 110, "horizon zero dawn": 80}},
+            {"label": "RTS", "gameData": {"age of empires ii": 150, "starcraft ii": 120, "manor lords": 80, "warcraft iii": 90, "command & conquer remastered": 70, "company of heroes 2": 60}},
+            {"label": "Grand Strategy / 4X", "gameData": {"civilization vi": 110, "stellaris": 130, "crusader kings iii": 120, "hearts of iron iv": 100, "endless legend": 70, "humankind": 60}},
+            {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70, "need for speed heat": 60, "dirt rally 2.0": 65}},
+            {"label": "Sports", "gameData": {"fc 25": 200, "nba 2k25": 150, "madden nfl 25": 80, "rocket league": 120, "tony hawk's pro skater 1 + 2": 50, "pga tour 2k23": 40}},
+            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90, "outlast": 55}},
+            {"label": "Survival / Sandbox", "gameData": {"minecraft": 200, "rust": 150, "ark survival ascended": 120, "terraria": 100, "valheim": 110, "don't starve together": 80}},
+            {"label": "Immersive Sim", "gameData": {"deus ex": 80, "dishonored 2": 70, "prey": 90, "hitman 3": 110, "system shock remake": 60, "deathloop": 75}},
+            {"label": "Stealth", "gameData": {"hitman 3": 120, "dishonored 2": 90, "metal gear solid v: the phantom pain": 140, "splinter cell: blacklist": 70, "thief": 50, "aragami": 45}},
+            {"label": "Platformer / Metroidvania", "gameData": {"ori and the blind forest": 100, "hollow knight": 150, "dead cells": 80, "celeste": 90, "metroid dread": 70, "blasphemous": 60}},
+            {"label": "Creative / Building", "gameData": {"minecraft": 180, "terraria": 90, "cities: skylines": 130, "planet coaster": 80, "satisfactory": 120, "factorio": 140}}
         ]
 
         total_games_list = set(user_games_normalized)
@@ -364,17 +373,26 @@ def KNN2(app_data):
         }
 
         player_profiles = [
-            {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90}},
-            {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacked": 40, "slime rancher": 60}},
-            {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80}},
+            {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90, "call of duty: warzone": 140, "rainbow six siege": 110}},
+            {"label": "Hero Shooter", "gameData": {"valorant": 120, "overwatch 2": 150, "apex legends": 100, "marvel rivals": 80, "team fortress 2": 70, "paladins": 60}},
+            {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacking": 40, "slime rancher": 60, "spiritfarer": 70, "a little to the left": 35}},
+            {"label": "Life Sim / Farming", "gameData": {"stardew valley": 140, "coral island": 90, "disney dreamlight valley": 100, "my time at sandrock": 80, "story of seasons": 70, "sun haven": 75}},
+            {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80, "risk of rain 2": 85, "enter the gungeon": 70}},
+            {"label": "Deckbuilder / Strategy Roguelike", "gameData": {"slay the spire": 140, "balatro": 110, "monster train": 90, "inscryption": 80, "wildfrost": 60, "across the obelisk": 50}},
             {"label": "Soulslike", "gameData": {"elden ring": 200, "dark souls iii": 100, "sekiro: shadows die twice": 80, "lies of p": 70, "dead cells": 90, "ori and the blind forest": 1.9}},
-            {"label": "RPG", "gameData": {"baldur's gate 3": 180, "the witcher 3": 150, "cyberpunk 2077": 100, "starfield": 60}},
-            {"label": "RTS", "gameData": {"age of empires ii": 150, "starcraft ii": 120, "manor lords": 80, "civilization vi": 110}},
-            {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70}},
-            {"label": "Sports", "gameData": {"fc 25": 200, "nba 2k25": 150, "madden nfl 25": 80, "rocket league": 120}},
-            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90}},
-            {"label": "Survival/Sandbox", "gameData": {"minecraft": 200, "rust": 150, "ark survival ascended": 120, "terraria": 100}},
-            {"label": "Immersive Sim", "gameData": {"deus ex": 80, "dishonored 2": 70, "prey": 90, "hitman 3": 110}}
+            {"label": "Action RPG", "gameData": {"elden ring": 150, "the witcher 3": 140, "monster hunter: world": 110, "nioh 2": 80, "dragon's dogma 2": 70, "dark souls iii": 90}},
+            {"label": "CRPG / Narrative RPG", "gameData": {"baldur's gate 3": 180, "divinity: original sin 2": 130, "disco elysium": 90, "pillars of eternity": 70, "pathfinder: wrath of the righteous": 60, "dragon age: origins": 80}},
+            {"label": "Open World RPG", "gameData": {"the witcher 3": 150, "cyberpunk 2077": 100, "starfield": 60, "skyrim": 170, "fallout 4": 110, "horizon zero dawn": 80}},
+            {"label": "RTS", "gameData": {"age of empires ii": 150, "starcraft ii": 120, "manor lords": 80, "warcraft iii": 90, "command & conquer remastered": 70, "company of heroes 2": 60}},
+            {"label": "Grand Strategy / 4X", "gameData": {"civilization vi": 110, "stellaris": 130, "crusader kings iii": 120, "hearts of iron iv": 100, "endless legend": 70, "humankind": 60}},
+            {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70, "need for speed heat": 60, "dirt rally 2.0": 65}},
+            {"label": "Sports", "gameData": {"fc 25": 200, "nba 2k25": 150, "madden nfl 25": 80, "rocket league": 120, "tony hawk's pro skater 1 + 2": 50, "pga tour 2k23": 40}},
+            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90, "outlast": 55}},
+            {"label": "Survival / Sandbox", "gameData": {"minecraft": 200, "rust": 150, "ark survival ascended": 120, "terraria": 100, "valheim": 110, "don't starve together": 80}},
+            {"label": "Immersive Sim", "gameData": {"deus ex": 80, "dishonored 2": 70, "prey": 90, "hitman 3": 110, "system shock remake": 60, "deathloop": 75}},
+            {"label": "Stealth", "gameData": {"hitman 3": 120, "dishonored 2": 90, "metal gear solid v: the phantom pain": 140, "splinter cell: blacklist": 70, "thief": 50, "aragami": 45}},
+            {"label": "Platformer / Metroidvania", "gameData": {"ori and the blind forest": 100, "hollow knight": 150, "dead cells": 80, "celeste": 90, "metroid dread": 70, "blasphemous": 60}},
+            {"label": "Creative / Building", "gameData": {"minecraft": 180, "terraria": 90, "cities: skylines": 130, "planet coaster": 80, "satisfactory": 120, "factorio": 140}}
         ]
 
         # Build shared game space
@@ -531,17 +549,26 @@ def RandomWalk(app_data):
         }
 
         player_profiles = [
-            {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90}},
-            {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacking": 40, "slime rancher": 60}},
-            {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80}},
+            {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90, "call of duty: warzone": 140, "rainbow six siege": 110}},
+            {"label": "Hero Shooter", "gameData": {"valorant": 120, "overwatch 2": 150, "apex legends": 100, "marvel rivals": 80, "team fortress 2": 70, "paladins": 60}},
+            {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacking": 40, "slime rancher": 60, "spiritfarer": 70, "a little to the left": 35}},
+            {"label": "Life Sim / Farming", "gameData": {"stardew valley": 140, "coral island": 90, "disney dreamlight valley": 100, "my time at sandrock": 80, "story of seasons": 70, "sun haven": 75}},
+            {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80, "risk of rain 2": 85, "enter the gungeon": 70}},
+            {"label": "Deckbuilder / Strategy Roguelike", "gameData": {"slay the spire": 140, "balatro": 110, "monster train": 90, "inscryption": 80, "wildfrost": 60, "across the obelisk": 50}},
             {"label": "Soulslike", "gameData": {"elden ring": 200, "dark souls iii": 100, "sekiro: shadows die twice": 80, "lies of p": 70, "dead cells": 90, "ori and the blind forest": 1.9}},
-            {"label": "RPG", "gameData": {"baldur's gate 3": 180, "the witcher 3": 150, "cyberpunk 2077": 100, "starfield": 60}},
-            {"label": "RTS", "gameData": {"age of empires ii": 150, "starcraft ii": 120, "manor lords": 80, "civilization vi": 110}},
-            {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70}},
-            {"label": "Sports", "gameData": {"fc 25": 200, "nba 2k25": 150, "madden nfl 25": 80, "rocket league": 120}},
-            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90}},
-            {"label": "Survival/Sandbox", "gameData": {"minecraft": 200, "rust": 150, "ark survival ascended": 120, "terraria": 100}},
-            {"label": "Immersive Sim", "gameData": {"deus ex": 80, "dishonored 2": 70, "prey": 90, "hitman 3": 110}}
+            {"label": "Action RPG", "gameData": {"elden ring": 150, "the witcher 3": 140, "monster hunter: world": 110, "nioh 2": 80, "dragon's dogma 2": 70, "dark souls iii": 90}},
+            {"label": "CRPG / Narrative RPG", "gameData": {"baldur's gate 3": 180, "divinity: original sin 2": 130, "disco elysium": 90, "pillars of eternity": 70, "pathfinder: wrath of the righteous": 60, "dragon age: origins": 80}},
+            {"label": "Open World RPG", "gameData": {"the witcher 3": 150, "cyberpunk 2077": 100, "starfield": 60, "skyrim": 170, "fallout 4": 110, "horizon zero dawn": 80}},
+            {"label": "RTS", "gameData": {"age of empires ii": 150, "starcraft ii": 120, "manor lords": 80, "warcraft iii": 90, "command & conquer remastered": 70, "company of heroes 2": 60}},
+            {"label": "Grand Strategy / 4X", "gameData": {"civilization vi": 110, "stellaris": 130, "crusader kings iii": 120, "hearts of iron iv": 100, "endless legend": 70, "humankind": 60}},
+            {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70, "need for speed heat": 60, "dirt rally 2.0": 65}},
+            {"label": "Sports", "gameData": {"fc 25": 200, "nba 2k25": 150, "madden nfl 25": 80, "rocket league": 120, "tony hawk's pro skater 1 + 2": 50, "pga tour 2k23": 40}},
+            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90, "outlast": 55}},
+            {"label": "Survival / Sandbox", "gameData": {"minecraft": 200, "rust": 150, "ark survival ascended": 120, "terraria": 100, "valheim": 110, "don't starve together": 80}},
+            {"label": "Immersive Sim", "gameData": {"deus ex": 80, "dishonored 2": 70, "prey": 90, "hitman 3": 110, "system shock remake": 60, "deathloop": 75}},
+            {"label": "Stealth", "gameData": {"hitman 3": 120, "dishonored 2": 90, "metal gear solid v: the phantom pain": 140, "splinter cell: blacklist": 70, "thief": 50, "aragami": 45}},
+            {"label": "Platformer / Metroidvania", "gameData": {"ori and the blind forest": 100, "hollow knight": 150, "dead cells": 80, "celeste": 90, "metroid dread": 70, "blasphemous": 60}},
+            {"label": "Creative / Building", "gameData": {"minecraft": 180, "terraria": 90, "cities: skylines": 130, "planet coaster": 80, "satisfactory": 120, "factorio": 140}}
         ]
 
         # stores how strongly each game is connected to others
