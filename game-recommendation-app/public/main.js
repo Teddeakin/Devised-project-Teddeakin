@@ -275,3 +275,31 @@ mergeButton.addEventListener("click", async () => {
         console.error("Error fetching extra data:", err);
     }
 });
+
+
+const menuToggle = document.getElementById("menuToggle");
+const menuClose = document.getElementById("menuClose");
+const sideMenu = document.getElementById("sideMenu");
+const menuOverlay = document.getElementById("menuOverlay");
+
+function openMenu() {
+    sideMenu.classList.add("open");
+    menuOverlay.classList.add("show");
+}
+
+function closeMenu() {
+    sideMenu.classList.remove("open");
+    menuOverlay.classList.remove("show");
+}
+
+if (menuToggle) {
+    menuToggle.addEventListener("click", openMenu);
+}
+
+if (menuClose) {
+    menuClose.addEventListener("click", closeMenu);
+}
+
+if (menuOverlay) {
+    menuOverlay.addEventListener("click", closeMenu);
+}

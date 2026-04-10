@@ -11,23 +11,46 @@
 
 <body>
     <header>
-        <h1>account input</h1>
-        <a href="Recomendation.html">library page</a>
+        <div class="headerLeft">
+            <button id="menuToggle" class="menuButton" aria-label="Open menu">☰</button>
+            <h1 class="siteTitle">Account Input</h1>
+        </div>
 
-        <nav>
-            <a href="">Home</a>
-            <a href="#Steam">Steam</a>
-            <a href="#Xbox">Xbox</a>
-            <a href="#Playstation">Playstation</a>
-            <a href="#Merge">Merge</a>
-
-            <a href="">Recommendation</a>
-            <a href="">Weighted</a>
-            <a href="">KNN</a>
-            <a href="">Random Walk</a>
-        </nav>
+        <div class="headerRight">
+            <a class="headerLinkButton" href="Recomendation.html">Library Page</a>
+        </div>
     </header>
 
+    <div id="menuOverlay" class="menuOverlay"></div>
+
+    <aside id="sideMenu" class="sideMenu">
+        <div class="sideMenuHeader">
+            <h2>Navigation</h2>
+            <button id="menuClose" class="menuCloseButton" aria-label="Close menu">x</button>
+        </div>
+
+        <nav class="sideNav">
+            <div class="navGroup">
+                <a class="primaryLink" href="">Home</a>
+                <div class="subLinks">
+                    <a href="#Steam">Steam</a>
+                    <a href="#Xbox">Xbox</a>
+                    <a href="#Playstation">Playstation</a>
+                    <a href="#Merge">Merge</a>
+                </div>
+            </div>
+
+            <div class="navGroup">
+                <a class="primaryLink" href="Recomendation.html">Recommendation</a>
+                <div class="subLinks">
+                    <a href="Recomendation.html#Weighted">Weighted</a>
+                    <a href="Recomendation.html#KNN">KNN</a>
+                    <a href="Recomendation.html#RandomWalk">Random Walk</a>
+                </div>
+            </div>
+        </nav>
+    </aside>
+    
     <main>
         <section id="Accounts">
 

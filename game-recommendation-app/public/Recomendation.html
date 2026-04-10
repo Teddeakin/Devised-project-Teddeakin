@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,48 +8,147 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.30.0.min.js" charset="utf-8"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <link rel="stylesheet" href="styles/recomendation.css">
     <script src="Algorithm.js" defer></script>
 </head>
+
 <body>
-    <main>
+    <header>
+        <div class="headerLeft">
+            <button id="menuToggle" class="menuButton" aria-label="Open menu">☰</button>
+            <h1 class="siteTitle">Recomendations</h1>
+        </div>
+
+        <div class="headerRight">
+            <a class="headerLinkButton" href="Accounts.html">Accounts Page</a>
+        </div>
+    </header>
+
+    <div id="menuOverlay" class="menuOverlay"></div>
+
+    <aside id="sideMenu" class="sideMenu">
+        <div class="sideMenuHeader">
+            <h2>Navigation</h2>
+            <button id="menuClose" class="menuCloseButton" aria-label="Close menu">x</button>
+        </div>
+
+        <nav class="sideNav">
+            <div class="navGroup">
+                <a class="primaryLink" href="Accounts.html">Home</a>
+                <div class="subLinks">
+                    <a href="Accounts.html#Steam">Steam</a>
+                    <a href="Accounts.html#Xbox">Xbox</a>
+                    <a href="Accounts.html#Playstation">Playstation</a>
+                    <a href="Accounts.html#Merge">Merge</a>
+                </div>
+            </div>
+
+            <div class="navGroup">
+                <a class="primaryLink" href="Recomendation.html">Recommendation</a>
+                <div class="subLinks">
+                    <a href="#Weighted">Weighted</a>
+                    <a href="#KNN">KNN</a>
+                    <a href="#RandomWalk">Random Walk</a>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <main class="pageShell">
+        <section class="pageIntro">
+            <h2>Recommendation Algorithms</h2>
+        </section>
+
         <section id="Algorithms">
-            <section id="WeightedLinearSection">
-                <button id="SendPythonBTN">Weighted Algorithm</button>
-                <p id="Python-responce"></p> <!-- need to change the names of these -->
-                <canvas id="WeightedLinearChart"></canvas>
-                <div id="WeightedDetailsPanel"></div>
-            </section>
-            <section id="KNNSection">
-                <button id="KNNAlgorithm">KNN Algorithm - Cosine</button>
-                <p id="KNN-responce"></p>
-                <canvas id="CosineChart"></canvas>
-                <div id="AdjacencyGrid" style="width:100%; height:600px; background: #1a1a1a;"></div>
-                <button id="KNNAlgorithm2">KNN Algorithm - Euclidean</button>
-                <p id="KNN-responce2"></p>
-                <canvas id="EuclideanChart"></canvas>
-            </section>
-            <section id="RandomWalkSection">
-                <button id="RandomWalk">Random Walk</button>
-                <p id="RandomWalk-Response"></p>
-                <div style="margin: 10px 0; color: rgb(0, 0, 0);">
-                    <span
-                        style="display:inline-block; width:12px; height:12px; background:#FFD700; border-radius:50%; margin-right:6px;"></span>
-                    Owned
-                    <span
-                        style="display:inline-block; width:12px; height:12px; background:#00FFFF; border-radius:50%; margin:0 6px 0 18px;"></span>
-                    Recommended
-                    <span
-                        style="display:inline-block; width:12px; height:12px; background:#888888; border-radius:50%; margin:0 6px 0 18px;"></span>
-                    Support
+
+            <section class="algorithmPanel" id="Weighted">
+                <div class="panelHeader">
+                    <h2>Weighted Linear Algorithm</h2>
+                    <button id="SendPythonBTN" class="algorithmButton">Run Weighted Algorithm</button>
                 </div>
-                <div id="RandomWalkGraph"
-                    style="width: 100%; height: 650px; border: 1px solid #444; border-radius: 8px; background: #111;">
-                </div>
-                <div id="RandomWalkDetails"
-                    style="margin-top: 16px; padding: 14px; border: 1px solid #444; border-radius: 8px; background: #111; color: white;">
+
+                <div class="resultBox" id="Python-responce"></div>
+
+                <div class="contentGrid singleColumn">
+                    <div class="visualPanel">
+                        <h3>Weighted Score Breakdown</h3>
+                        <canvas id="WeightedLinearChart"></canvas>
+                    </div>
+
+                    <div class="detailPanel">
+                        <h3>Recommendation Details</h3>
+                        <div id="WeightedDetailsPanel"></div>
+                    </div>
                 </div>
             </section>
+
+            <section class="algorithmPanel" id="KNN">
+                <div class="panelHeader">
+                    <h2>KNN Algorithms</h2>
+                </div>
+
+                <div class="contentGrid singleColumn">
+                    <div class="visualPanel largePanel">
+                        <h3>KNN Adjacency Grid</h3>
+                        <div id="AdjacencyGrid" class="graphBox"></div>
+                    </div>
+
+                    <div class="dualButtonRow">
+                        <button id="KNNAlgorithm" class="algorithmButton">KNN Algorithm - Cosine</button>
+                        <button id="KNNAlgorithm2" class="algorithmButton">KNN Algorithm - Euclidean</button>
+                    </div>
+
+                    <div class="resultGrid">
+                        <div class="resultPanel">
+                            <h3>Cosine Results</h3>
+                            <div class="resultBox" id="KNN-responce"></div>
+                            <canvas id="CosineChart"></canvas>
+                        </div>
+
+                        <div class="resultPanel">
+                            <h3>Euclidean Results</h3>
+                            <div class="resultBox" id="KNN-responce2"></div>
+                            <canvas id="EuclideanChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="algorithmPanel">
+                <div class="panelHeader">
+                    <h2>Random Walk Algorithm</h2>
+                    <button id="RandomWalk" class="algorithmButton">Run Random Walk</button>
+                </div>
+
+                <div class="resultBox" id="RandomWalk-Response"></div>
+
+                <div class="legendBar">
+                    <span class="legendItem">
+                        <span class="legendDot ownedDot"></span>Owned
+                    </span>
+                    <span class="legendItem">
+                        <span class="legendDot recommendedDot"></span>Recommended
+                    </span>
+                    <span class="legendItem">
+                        <span class="legendDot supportDot"></span>Support
+                    </span>
+                </div>
+
+                <div class="contentGrid singleColumn">
+                    <div class="visualPanel largePanel">
+                        <h3>Random Walk Graph</h3>
+                        <div id="RandomWalkGraph" class="graphBox tallGraph"></div>
+                    </div>
+
+                    <div class="detailPanel">
+                        <h3>Node Details</h3>
+                        <div id="RandomWalkDetails"></div>
+                    </div>
+                </div>
+            </section>
+
         </section>
     </main>
 </body>
+
 </html>
