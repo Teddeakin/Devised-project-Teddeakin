@@ -18,29 +18,93 @@ const appData = {
 
 const savedData = localStorage.getItem("appData");
 
-if (savedData) {
-    const parsed = JSON.parse(savedData);
+function saveAppData() {
+    localStorage.setItem("appData", JSON.stringify(appData));
+}
 
-    Object.assign(appData, parsed);
+function renderSteamLibrary() {
+    const steamInfo = document.getElementById("Steam-info");
 
     if (appData.steam.games.length) {
-        document.getElementById("Steam-info").innerHTML = appData.steam.games.map(game => `${game.name} - ${game.playtimeHours} hrs`).join("<br>");
+        steamInfo.innerHTML = appData.steam.games
+            .map(game => `${game.name} - ${game.playtimeHours} hrs`)
+            .join("<br>");
+    } else {
+        steamInfo.innerHTML = "";
     }
+}
 
-    // if (appData.xbox.games.length) {
-    //     document.getElementById("Xbox-info").innerHTML = JSON.stringify(appData.xbox.games);
-    // }
+function renderXboxLibrary() {
+    const xboxInfo = document.getElementById("Xbox-info");
+
+    if (appData.xbox.games.length) {
+        xboxInfo.innerHTML = appData.xbox.games
+            .map(game => {
+                if (typeof game === "string") return game;
+                if (game.name && game.playtimeMinutes) {
+                    return `${game.name} - ${(game.playtimeMinutes / 60).toFixed(1)} hrs`;
+                }
+                if (game.name) return game.name;
+                return JSON.stringify(game);
+            })
+            .join("<br>");
+    } else {
+        xboxInfo.innerHTML = "";
+    }
+}
+
+function renderPlaystationLibrary() {
+    const playstationInfo = document.getElementById("Playstation-info");
 
     if (appData.playstation.games.length) {
-        document.getElementById("Playstation-info").innerHTML = appData.playstation.games.map(game => `${game.name} - ${game.playtime}`).join("<br>");;
+        playstationInfo.innerHTML = appData.playstation.games
+            .map(game => `${game.name} - ${game.playtime}`)
+            .join("<br>");
+    } else {
+        playstationInfo.innerHTML = "";
     }
+}
 
-    // // console.log(appData.steam.games)
-    // // console.log(appData.playstation.games)
+function renderMergedLibrary() {
+    const mergedInfo = document.getElementById("Merged-info");
 
     if (appData.Merged.games.length) {
-        document.getElementById("Merged-info").innerHTML = appData.Merged.games.map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`).join("<br>");
-    };
+        mergedInfo.innerHTML = appData.Merged.games
+            .map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`)
+            .join("<br>");
+    } else {
+        mergedInfo.innerHTML = "";
+    }
+}
+
+function refreshMergedLibrary() {
+    appData.Merged.games = mergeAllGames();
+    saveAppData();
+    renderMergedLibrary();
+}
+
+if (savedData) {
+    const parsed = JSON.parse(savedData);
+    Object.assign(appData, parsed);
+}
+
+renderSteamLibrary();
+renderXboxLibrary();
+renderPlaystationLibrary();
+renderMergedLibrary();
+
+// --------------------------------------------------
+// One fetchJSON only
+// --------------------------------------------------
+async function fetchJSON(url) {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!res.ok) {
+        throw new Error(data.error || `Request failed: ${res.status}`);
+    }
+
+    return data;
 }
 
 // Steam --------------------------------------------------
@@ -51,33 +115,18 @@ const SteamDelete = document.getElementById("SteamDeleteBtn");
 
 SteamInput.value = localStorage.getItem("steamId") || "";
 
-async function fetchJSON(url) {
-    const res = await fetch(url);
-
-    if (!res.ok) {
-        throw new Error(`Request failed: ${res.status}`);
-    }
-
-    return res.json();
-}
-
 SteamButton.addEventListener("click", async () => {
     const steamId = SteamInput.value.trim();
 
     if (!steamId) {
-        // console.log("No SteamID entered");
         return;
     }
 
     localStorage.setItem("steamId", steamId);
 
     try {
-
         const Steam_Profile_Data = await fetchJSON(`/api/steam/profile/${steamId}`);
-        // console.log("Profile data:", Steam_Profile_Data);
-
         const Steam_Games_Data = await fetchJSON(`/api/steam/games/${steamId}`);
-        // console.log("Owned games:", Steam_Games_Data);
 
         appData.steam.profile = Steam_Profile_Data;
         appData.steam.games = Steam_Games_Data.games.map(game => ({
@@ -86,117 +135,123 @@ SteamButton.addEventListener("click", async () => {
             playtimeHours: (game.playtime_forever / 60).toFixed(1)
         }));
 
-        localStorage.setItem("appData", JSON.stringify(appData));
-
-        document.getElementById("Steam-info").innerHTML = appData.steam.games.map(game => `${game.name} - ${game.playtimeHours} hrs`).join("<br>");
+        saveAppData();
+        renderSteamLibrary();
+        refreshMergedLibrary();
 
     } catch (err) {
         console.error("Error fetching Steam data:", err.message);
     }
 });
 
-SteamDelete.addEventListener("click", async () => {
+SteamDelete.addEventListener("click", () => {
+    localStorage.removeItem("steamId");
 
+    appData.steam.profile = null;
+    appData.steam.games = [];
+    appData.Merged.games = [];
+
+    SteamInput.value = "";
+    saveAppData();
+
+    renderSteamLibrary();
+    refreshMergedLibrary();
 });
 
 // Xbox -----------------------------------------------
 
 const XboxButton = document.getElementById("XboxSearchBtn");
 const XboxInput = document.getElementById("XboxGamertagInput");
+const XboxDelete = document.getElementById("XboxDeleteBtn");
 
 XboxInput.value = localStorage.getItem("gamertag") || "";
 
-async function fetchJSON(url) {
-    const res = await fetch(url);
-
-    const data = await res.json();
-
-    if (!res.ok) {
-        throw new Error(data.error || `Request failed: ${res.status}`);
-    }
-
-    return data;
-}
-
 XboxButton.addEventListener("click", async () => {
-    // console.log("searching");
     const gamertag = XboxInput.value.trim();
 
     if (!gamertag) {
-        // console.log("No gamertag entered");
         return;
     }
 
     try {
-
         localStorage.setItem("gamertag", gamertag);
 
         const Xbox_Profile_Data = await fetchJSON(`/api/xbox/profile/${encodeURIComponent(gamertag)}`);
-
-        // console.log("Xbox profile: ", Xbox_Profile_Data);
-
         const Xboxgames = await fetchJSON(`/api/xbox/game-names/${Xbox_Profile_Data.xuid}`);
-        // console.log("Xbox games owned: ", Xboxgames);
 
         appData.xbox.profile = Xbox_Profile_Data;
         appData.xbox.games = Xboxgames;
 
-        // console.log("Xboxgames")
-
-        localStorage.setItem("appData", JSON.stringify(appData));
-
-        document.getElementById("Xbox-info").innerHTML = JSON.stringify(Xboxgames);
+        saveAppData();
+        renderXboxLibrary();
+        refreshMergedLibrary();
 
     } catch (err) {
         console.error("Error fetching Xbox data:", err.message);
     }
-}
-)
+});
+
+XboxDelete.addEventListener("click", () => {
+    localStorage.removeItem("gamertag");
+
+    appData.xbox.profile = null;
+    appData.xbox.games = [];
+    appData.Merged.games = [];
+
+    XboxInput.value = "";
+    saveAppData();
+
+    renderXboxLibrary();
+    refreshMergedLibrary();
+});
 
 // Playstation --------------------------------------------------
 
 const PlaystationButton = document.getElementById("PlaystationSearchBtn");
 const PlaystationInput = document.getElementById("PlaystationUserIdInput");
+const PlaystationDelete = document.getElementById("PlaystationDeleteBtn");
 
 PlaystationInput.value = localStorage.getItem("PlaystationId") || "";
-
-async function fetchJSON(url) {
-    const res = await fetch(url);
-
-    if (!res.ok) {
-        throw new Error(`Request failed: ${res.status}`);
-    }
-
-    return res.json();
-}
 
 PlaystationButton.addEventListener("click", async () => {
     const PlaystationId = PlaystationInput.value.trim();
 
-    if (!PlaystationInput) {
-        // console.log("No SteamID entered");
+    if (!PlaystationId) {
+        console.log("No Playstation ID entered");
         return;
     }
 
     try {
-
         localStorage.setItem("PlaystationId", PlaystationId);
 
         const Playstation_Games_Data = await fetchJSON(`/api/playstation/games/${PlaystationId}`);
-        // console.log("Owned games:", Playstation_Games_Data);
 
         appData.playstation.games = Playstation_Games_Data.games.map(game => ({
             name: game.name,
             playtime: game.playtime || "0h"
         }));
 
-        localStorage.setItem("appData", JSON.stringify(appData));
-
-        document.getElementById("Playstation-info").innerHTML = appData.playstation.games.map(game => `${game.name} - ${game.playtime}`).join("<br>");
+        saveAppData();
+        renderPlaystationLibrary();
+        refreshMergedLibrary();
 
     } catch (err) {
-        console.error("Error fetching Steam data:", err.message);
+        console.error("Error fetching Playstation data:", err.message);
     }
+});
+
+PlaystationDelete.addEventListener("click", () => {
+    localStorage.removeItem("PlaystationId");
+
+    appData.playstation.profile = null;
+    appData.playstation.games = [];
+    appData.Merged.games = [];
+
+    PlaystationInput.value = "";
+    saveAppData();
+
+    renderPlaystationLibrary();
+    refreshMergedLibrary();
 });
 
 // merging data ---------------------------------------------------
@@ -211,18 +266,15 @@ function mergeAllGames() {
     const mergedMap = new Map();
 
     for (const game of allGames) {
-
         const name = game.name.trim().toLowerCase();
-
         let hours = 0;
 
         if (game.playtimeHours) {
             hours = parseFloat(game.playtimeHours);
         } else if (game.playtime) {
-            // // console.log(game.playtime.match(/(\d+)H/));
-            const h = game.playtime.match(/(\d+)H/);
-            const m = game.playtime.match(/(\d+)M/);
-            const s = game.playtime.match(/(\d+)S/);
+            const h = game.playtime.match(/(\d+)H/i);
+            const m = game.playtime.match(/(\d+)M/i);
+            const s = game.playtime.match(/(\d+)S/i);
 
             const hoursNum = h ? parseInt(h[1]) : 0;
             const minutesNum = m ? parseInt(m[1]) : 0;
@@ -241,7 +293,6 @@ function mergeAllGames() {
                 hours: hours
             });
         }
-        // // console.log(game.name, game.playtime);
     }
 
     return Array.from(mergedMap.values());
@@ -250,9 +301,7 @@ function mergeAllGames() {
 const mergeButton = document.getElementById("MergeGamesBtn");
 
 mergeButton.addEventListener("click", async () => {
-
     const mergedGames = mergeAllGames();
-
 
     try {
         const response = await fetch("/api/fetch-extra-data", {
@@ -264,12 +313,8 @@ mergeButton.addEventListener("click", async () => {
         const enrichedGames = await response.json();
 
         appData.Merged.games = enrichedGames;
-        localStorage.setItem("appData", JSON.stringify(appData));
-
-        document.getElementById("Merged-info").innerHTML =
-            mergedGames
-                .map(game => `${game.name} - ${game.hours.toFixed(1)} hrs`)
-                .join("<br>");
+        saveAppData();
+        renderMergedLibrary();
 
     } catch (err) {
         console.error("Error fetching extra data:", err);

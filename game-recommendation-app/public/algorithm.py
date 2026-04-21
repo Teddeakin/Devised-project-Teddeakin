@@ -151,7 +151,7 @@ def main(app_data):
             quality = (game['metacritic'] - min_meta) / meta_range if game.get("metacritic") is not None else 0
 
             # genre still matters most, then tag, but metacritic now has a bit more influence
-            w1, w2, w3 = 0.45, 0.30, 0.25
+            w1, w2, w3 = 0.50, 0.35, 0.15
 
             genre_weighted = genre_score * w1
             tag_weighted = tag_score * w2
@@ -213,7 +213,7 @@ def KNN(app_data):
 
         player_profiles = [
             {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90, "call of duty: warzone": 140, "rainbow six siege": 110}},
-            {"label": "Hero Shooter", "gameData": {"valorant": 120, "overwatch 2": 150, "apex legends": 100, "marvel rivals": 80, "team fortress 2": 70, "paladins": 60}},
+            {"label": "Hero Shooter", "gameData": {"valorant": 120, "overwatch": 150, "apex legends": 100, "marvel rivals": 80, "team fortress 2": 70, "paladins": 60}},
             {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacking": 40, "slime rancher": 60, "spiritfarer": 70, "a little to the left": 35}},
             {"label": "Life Sim / Farming", "gameData": {"stardew valley": 140, "coral island": 90, "disney dreamlight valley": 100, "my time at sandrock": 80, "story of seasons": 70, "sun haven": 75}},
             {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80, "risk of rain 2": 85, "enter the gungeon": 70}},
@@ -226,7 +226,7 @@ def KNN(app_data):
             {"label": "Grand Strategy / 4X", "gameData": {"civilization vi": 110, "stellaris": 130, "crusader kings iii": 120, "hearts of iron iv": 100, "endless legend": 70, "humankind": 60}},
             {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70, "need for speed heat": 60, "dirt rally 2.0": 65}},
             {"label": "Sports", "gameData": {"fc 25": 200, "nba 2k25": 150, "madden nfl 25": 80, "rocket league": 120, "tony hawk's pro skater 1 + 2": 50, "pga tour 2k23": 40}},
-            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90, "outlast": 55}},
+            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "outlast": 55}},
             {"label": "Survival / Sandbox", "gameData": {"minecraft": 200, "rust": 150, "ark survival ascended": 120, "terraria": 100, "valheim": 110, "don't starve together": 80}},
             {"label": "Immersive Sim", "gameData": {"deus ex": 80, "dishonored 2": 70, "prey": 90, "hitman 3": 110, "system shock remake": 60, "deathloop": 75}},
             {"label": "Stealth", "gameData": {"hitman 3": 120, "dishonored 2": 90, "metal gear solid v: the phantom pain": 140, "splinter cell: blacklist": 70, "thief": 50, "aragami": 45}},
@@ -374,7 +374,7 @@ def KNN2(app_data):
 
         player_profiles = [
             {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90, "call of duty: warzone": 140, "rainbow six siege": 110}},
-            {"label": "Hero Shooter", "gameData": {"valorant": 120, "overwatch 2": 150, "apex legends": 100, "marvel rivals": 80, "team fortress 2": 70, "paladins": 60}},
+            {"label": "Hero Shooter", "gameData": {"valorant": 120, "overwatch": 150, "apex legends": 100, "marvel rivals": 80, "team fortress 2": 70, "paladins": 60}},
             {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacking": 40, "slime rancher": 60, "spiritfarer": 70, "a little to the left": 35}},
             {"label": "Life Sim / Farming", "gameData": {"stardew valley": 140, "coral island": 90, "disney dreamlight valley": 100, "my time at sandrock": 80, "story of seasons": 70, "sun haven": 75}},
             {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80, "risk of rain 2": 85, "enter the gungeon": 70}},
@@ -387,7 +387,7 @@ def KNN2(app_data):
             {"label": "Grand Strategy / 4X", "gameData": {"civilization vi": 110, "stellaris": 130, "crusader kings iii": 120, "hearts of iron iv": 100, "endless legend": 70, "humankind": 60}},
             {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70, "need for speed heat": 60, "dirt rally 2.0": 65}},
             {"label": "Sports", "gameData": {"fc 25": 200, "nba 2k25": 150, "madden nfl 25": 80, "rocket league": 120, "tony hawk's pro skater 1 + 2": 50, "pga tour 2k23": 40}},
-            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90, "outlast": 55}},
+            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "outlast": 55}},
             {"label": "Survival / Sandbox", "gameData": {"minecraft": 200, "rust": 150, "ark survival ascended": 120, "terraria": 100, "valheim": 110, "don't starve together": 80}},
             {"label": "Immersive Sim", "gameData": {"deus ex": 80, "dishonored 2": 70, "prey": 90, "hitman 3": 110, "system shock remake": 60, "deathloop": 75}},
             {"label": "Stealth", "gameData": {"hitman 3": 120, "dishonored 2": 90, "metal gear solid v: the phantom pain": 140, "splinter cell: blacklist": 70, "thief": 50, "aragami": 45}},
@@ -550,7 +550,7 @@ def RandomWalk(app_data):
 
         player_profiles = [
             {"label": "FPS", "gameData": {"halo reach": 80, "counter-strike 2": 150, "apex legends": 120, "valorant": 90, "call of duty: warzone": 140, "rainbow six siege": 110}},
-            {"label": "Hero Shooter", "gameData": {"valorant": 120, "overwatch 2": 150, "apex legends": 100, "marvel rivals": 80, "team fortress 2": 70, "paladins": 60}},
+            {"label": "Hero Shooter", "gameData": {"valorant": 120, "overwatch": 150, "apex legends": 100, "marvel rivals": 80, "team fortress 2": 70, "paladins": 60}},
             {"label": "Cozy", "gameData": {"stardew valley": 150, "animal crossing": 100, "unpacking": 40, "slime rancher": 60, "spiritfarer": 70, "a little to the left": 35}},
             {"label": "Life Sim / Farming", "gameData": {"stardew valley": 140, "coral island": 90, "disney dreamlight valley": 100, "my time at sandrock": 80, "story of seasons": 70, "sun haven": 75}},
             {"label": "Roguelike", "gameData": {"hades": 120, "slay the spire": 100, "dead cells": 90, "balatro": 80, "risk of rain 2": 85, "enter the gungeon": 70}},
@@ -563,7 +563,7 @@ def RandomWalk(app_data):
             {"label": "Grand Strategy / 4X", "gameData": {"civilization vi": 110, "stellaris": 130, "crusader kings iii": 120, "hearts of iron iv": 100, "endless legend": 70, "humankind": 60}},
             {"label": "Racing", "gameData": {"forza horizon 5": 100, "gran turismo 7": 120, "f1 24": 90, "assetto corsa": 70, "need for speed heat": 60, "dirt rally 2.0": 65}},
             {"label": "Sports", "gameData": {"fc 25": 200, "nba 2k25": 150, "madden nfl 25": 80, "rocket league": 120, "tony hawk's pro skater 1 + 2": 50, "pga tour 2k23": 40}},
-            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "dead cells": 90, "outlast": 55}},
+            {"label": "Horror", "gameData": {"resident evil 4": 60, "silent hill 2": 50, "phasmophobia": 100, "dead by daylight": 150, "outlast": 55}},
             {"label": "Survival / Sandbox", "gameData": {"minecraft": 200, "rust": 150, "ark survival ascended": 120, "terraria": 100, "valheim": 110, "don't starve together": 80}},
             {"label": "Immersive Sim", "gameData": {"deus ex": 80, "dishonored 2": 70, "prey": 90, "hitman 3": 110, "system shock remake": 60, "deathloop": 75}},
             {"label": "Stealth", "gameData": {"hitman 3": 120, "dishonored 2": 90, "metal gear solid v: the phantom pain": 140, "splinter cell: blacklist": 70, "thief": 50, "aragami": 45}},

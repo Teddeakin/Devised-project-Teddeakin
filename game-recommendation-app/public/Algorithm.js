@@ -272,7 +272,7 @@ function drawAdjacencyGrid(result) {
     });
 
     const layout = {
-        title: "KNN - cosine",
+        title: "KNN",
         paper_bgcolor: "#1a1a1a",
         font: { color: "white" },
         scene: {

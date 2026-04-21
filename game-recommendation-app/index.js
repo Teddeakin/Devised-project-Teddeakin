@@ -97,7 +97,7 @@ async function searchXboxUser(gamertag) {
         `https://xbl.io/api/v2/search/${encodeURIComponent(gamertag)}`,
         {
             headers: {
-                "X-Authorization": "c005e453-5d6e-42a1-bdd6-db77b821800a"
+                "X-Authorization": "22b72ce9-0cda-406e-a17d-9d06af8e6350"
             }
         }
     );
