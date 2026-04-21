@@ -1,2 +1,3 @@
 node_modules/
 game-recommendation-app/gameCache.json
+game-recommendation-app/public/gameCache.json

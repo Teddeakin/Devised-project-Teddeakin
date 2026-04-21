@@ -2,14 +2,24 @@ const express = require("express");
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
+const { spawn } = require("child_process");
 
 const app = express();
 app.use(express.urlencoded({ extended: false }));
-app.listen(3000, () => console.log("Listening on http://localhost:3000"));
-
 app.use(express.json());
-
 app.use(express.static("./public"));
+
+const server = app.listen(3000, () => {
+    console.log("Listening on http://localhost:3000");
+});
+
+server.on("close", () => {
+    console.log("Server closed");
+});
+
+server.on("error", (err) => {
+    console.error("Server error:", err);
+});
 
 // starts the website on Accounts.html
 app.get("/", (req, res) => {
@@ -35,7 +45,6 @@ async function getOwnedGames(steamId) {
 
     return response.data.response;
 }
-
 
 app.get("/api/steam/games/:steamId", async (req, res) => {
     try {
@@ -67,7 +76,6 @@ async function getPlayerSummary(steamId) {
     });
 
     const player = response.data?.response?.players?.[0];
-
     return player || null;
 }
 
@@ -148,35 +156,6 @@ app.get("/api/xbox/profile/:gamertag", async (req, res) => {
     }
 });
 
-// all info to go back to and pick out the stuff i need
-// async function getXboxGamesPlayed(xuid) {
-//     const response = await axios.get(
-//         `https://xbl.io/api/v2/achievements/player/${xuid}`,
-//         {
-//             headers: {
-//                 "X-Authorization": "c005e453-5d6e-42a1-bdd6-db77b821800a"
-//             }
-//         }
-//     );
-
-//     console.log("Xbox games played:");
-//     console.log(response.data);
-
-//     return response.data;
-// }
-
-// app.get("/api/xbox/games/:xuid", async (req, res) => {
-//     try {
-//         const data = await getXboxGamesPlayed(req.params.xuid);
-//         res.json(data);
-//     } catch (err) {
-//         console.error(err.response?.data || err.message);
-//         res.status(500).json({ error: "Failed to fetch Xbox games" });
-//     }
-// });
-
-// function for just the names of games owned - xbox
-
 async function getXboxGameNames(xuid) {
     const response = await axios.get(
         `https://xbl.io/api/v2/player/titleHistory/${xuid}`,
@@ -193,24 +172,6 @@ async function getXboxGameNames(xuid) {
     return response.data.titles?.map(title => title.name) || [];
 }
 
-// async function getXboxGameNames(xuid) {
-//     const response = await axios.get(
-//         `https://xbl.io/api/v2/achievements/player/${xuid}`,
-//         {
-//             headers: {
-//                 "X-Authorization": "c005e453-5d6e-42a1-bdd6-db77b821800a"
-//             }
-//         }
-//     );
-
-//     const names = response.data.titles.map(title => title.name);
-
-//     console.log("Xbox game names:");
-//     console.log(names);
-
-//     return names;
-// }
-
 app.get("/api/xbox/game-names/:xuid", async (req, res) => {
     try {
         const names = await getXboxGameNames(req.params.xuid);
@@ -220,7 +181,6 @@ app.get("/api/xbox/game-names/:xuid", async (req, res) => {
         res.status(500).json({ error: "Failed to fetch game names" });
     }
 });
-
 
 // Playstation ---------------------------------------------------------------------------
 
@@ -260,7 +220,6 @@ async function getAccountId(accessToken, username) {
     return domain.results[0].socialMetadata.accountId;
 }
 
-
 async function getUserPlayStationGames(accessToken, accountId) {
     const psn = await loadPsnApi();
 
@@ -279,7 +238,6 @@ async function getUserPlayStationGames(accessToken, accountId) {
         allGames.push(...games);
 
         if (!response.nextOffset) break;
-
         offset = response.nextOffset;
     }
 
@@ -293,68 +251,47 @@ async function getUserPlayStationGames(accessToken, accountId) {
         }));
 }
 
-
-
-
-const NPSSO = "xL33nLA5qsWsO1PoNkzYrzmL5dmwjbnyb5A7GWpxraNxEOoXORZTiXt96nKoPaaw";
-
+const NPSSO = "1Yf1VIgZrLipakI4hFIV6SisMOn7uljed90WqryLAstrARp47R2sfoxsEjSqGuUq";
 
 app.get("/api/playstation/games/:username", async (req, res) => {
     try {
         const accessToken = await psnLogin(NPSSO);
-
-        const accountId = await getAccountId(
-            accessToken,
-            req.params.username
-        );
-
-        const games = await getUserPlayStationGames(
-            accessToken,
-            accountId
-        );
+        const accountId = await getAccountId(accessToken, req.params.username);
+        const games = await getUserPlayStationGames(accessToken, accountId);
 
         res.json({ games });
-
     } catch (err) {
         console.error("PSN ERROR:", err);
         res.status(500).json({ error: err.message });
     }
 });
 
-
 // Python -----------------------------------------------------------------
 
-
-const { spawn } = require("child_process");
-
 app.post("/api/run-algorithm", (req, res) => {
-
     const python = spawn("python", ["public/algorithm.py"]);
 
     let result = "";
     let error = "";
 
-    // send JSON to Python as a string 
     python.stdin.write(JSON.stringify(req.body));
     python.stdin.end();
 
-    // get output
     python.stdout.on("data", (data) => {
         result += data.toString();
     });
-    // listens for errors
+
     python.stderr.on("data", (data) => {
         error += data.toString();
     });
-    // exits python when closed (saves resources)
-    python.on("close", (code) => {
 
-        if (code !== 0) { // if python crashes
+    python.on("close", (code) => {
+        if (code !== 0) {
             console.error("Python exited with error:", error);
             return res.status(500).json({ error: "Python failed" });
         }
 
-        try { // if python worked
+        try {
             const parsed = JSON.parse(result);
             res.json(parsed);
         } catch (err) {
@@ -367,15 +304,44 @@ app.post("/api/run-algorithm", (req, res) => {
 // Cache data ----------------------------------------------------------
 
 const CACHE_FILE = path.join(__dirname, "gameCache.json");
+const STARTER_GAMES_FILE = path.join(__dirname, "starter_games_cache.json");
 const RAWG_API_KEY = "f8a5b9f2158646e280f46891ec77ca44";
+
+function normalizeName(name) {
+    return String(name || "")
+        .replace(/[™®©]/g, " ")
+        .normalize("NFKD")
+        .replace(/[^\x00-\x7F]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
 
 function readCache() {
     if (!fs.existsSync(CACHE_FILE)) return {};
-    return JSON.parse(fs.readFileSync(CACHE_FILE, "utf8"));
+
+    const raw = JSON.parse(fs.readFileSync(CACHE_FILE, "utf8"));
+    const normalized = {};
+
+    for (const [key, value] of Object.entries(raw)) {
+        normalized[normalizeName(key)] = value;
+    }
+
+    return normalized;
 }
 
 function writeCache(data) {
-    fs.writeFileSync(CACHE_FILE, JSON.stringify(data, null, 2));
+    const ordered = Object.fromEntries(
+        Object.entries(data).sort(([a], [b]) => a.localeCompare(b))
+    );
+
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(ordered, null, 2), "utf8");
+}
+
+function readStarterGames() {
+    if (!fs.existsSync(STARTER_GAMES_FILE)) return [];
+    return JSON.parse(fs.readFileSync(STARTER_GAMES_FILE, "utf8"));
 }
 
 function simplifyGameData(rawgData) {
@@ -390,39 +356,140 @@ function simplifyGameData(rawgData) {
         genres: rawgData.genres?.map(g => g.slug) || [],
         tags: rawgData.tags?.filter(t => t.language === "eng").map(t => t.slug) || [],
         esrb: rawgData.esrb_rating?.slug || "not-rated",
-        image: rawgData.background_image 
+        image: rawgData.background_image
     };
 }
 
+async function fetchRawgGame(gameName) {
+    const response = await axios.get("https://api.rawg.io/api/games", {
+        params: {
+            key: RAWG_API_KEY,
+            search: gameName,
+            page_size: 5
+        }
+    });
+
+    const results = response.data.results || [];
+    if (!results.length) return null;
+
+    const target = normalizeName(gameName);
+
+    results.sort((a, b) => {
+        const aName = normalizeName(a.name);
+        const bName = normalizeName(b.name);
+
+        let aScore = 0;
+        let bScore = 0;
+
+        if (aName === target) aScore += 100;
+        else if (aName.includes(target) || target.includes(aName)) aScore += 40;
+        aScore += (a.metacritic || 0) / 10;
+        aScore += a.rating || 0;
+
+        if (bName === target) bScore += 100;
+        else if (bName.includes(target) || target.includes(bName)) bScore += 40;
+        bScore += (b.metacritic || 0) / 10;
+        bScore += b.rating || 0;
+
+        return bScore - aScore;
+    });
+
+    return results[0];
+}
+
+let starterCacheReady = false;
+let starterCachePromise = null;
+
+async function ensureStarterCache() {
+    if (starterCacheReady) return;
+    if (starterCachePromise) return starterCachePromise;
+
+    starterCachePromise = (async () => {
+        const starterGames = readStarterGames();
+        const cache = readCache();
+
+        let updated = false;
+        let addedCount = 0;
+
+        for (const title of starterGames) {
+            const key = normalizeName(title);
+
+            if (cache[key]) continue;
+
+            try {
+                const rawData = await fetchRawgGame(title);
+
+                if (!rawData) {
+                    console.log(`No RAWG result for starter game: ${title}`);
+                    continue;
+                }
+
+                cache[key] = simplifyGameData(rawData);
+                updated = true;
+                addedCount++;
+
+                console.log(`Cached starter game: ${title}`);
+
+                await new Promise(resolve => setTimeout(resolve, 250));
+            } catch (err) {
+                console.error(`Failed starter cache fetch for ${title}:`, err.message);
+            }
+        }
+
+        if (updated) {
+            writeCache(cache);
+        }
+
+        starterCacheReady = true;
+        console.log(`Starter cache ready. Added ${addedCount} new games.`);
+    })();
+
+    return starterCachePromise;
+}
+
+// choose one of these startup options:
+
+// always check starter cache on startup
+ensureStarterCache().catch(err => {
+    console.error("Starter cache initialization failed:", err.message);
+});
+
+// or, if you prefer only sometimes, replace the block above with:
+// if (process.env.BUILD_STARTER_CACHE === "true") {
+//     ensureStarterCache().catch(err => {
+//         console.error("Starter cache initialization failed:", err.message);
+//     });
+// }
+
 app.post("/api/fetch-extra-data", async (req, res) => {
-    const { games } = req.body; 
+    const { games } = req.body;
+
+    await ensureStarterCache();
+
     let cache = readCache();
     let updated = false;
 
     const enrichedGames = await Promise.all(games.map(async (game) => {
-        const gameKey = game.name.toLowerCase().trim();
+        const gameKey = normalizeName(game.name);
 
         if (cache[gameKey]) {
             return { ...game, extraData: cache[gameKey] };
         }
 
         try {
-            const response = await axios.get(`https://api.rawg.io/api/games`, {
-                params: {
-                    key: RAWG_API_KEY,
-                    search: game.name,
-                    page_size: 1
-                }
-            });
+            const rawData = await fetchRawgGame(game.name);
 
-            const rawData = response.data.results[0];
+            if (!rawData) {
+                return game;
+            }
+
             const cleanData = simplifyGameData(rawData);
-            
             cache[gameKey] = cleanData;
             updated = true;
-            
+
             return { ...game, extraData: cleanData };
         } catch (error) {
+            console.error(`Failed to fetch extra data for ${game.name}:`, error.message);
             return game;
         }
     }));
