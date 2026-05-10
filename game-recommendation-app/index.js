@@ -251,7 +251,7 @@ async function getUserPlayStationGames(accessToken, accountId) {
         }));
 }
 
-const NPSSO = "1Yf1VIgZrLipakI4hFIV6SisMOn7uljed90WqryLAstrARp47R2sfoxsEjSqGuUq";
+const NPSSO = "3SNP0MDfNRhqrFNczg8seDAylwrgNmRCzMaPpg43uDmsKyLRC9aOLwAdTksIpidV";
 
 app.get("/api/playstation/games/:username", async (req, res) => {
     try {
@@ -447,19 +447,10 @@ async function ensureStarterCache() {
     return starterCachePromise;
 }
 
-// choose one of these startup options:
-
-// always check starter cache on startup
 ensureStarterCache().catch(err => {
     console.error("Starter cache initialization failed:", err.message);
 });
 
-// or, if you prefer only sometimes, replace the block above with:
-// if (process.env.BUILD_STARTER_CACHE === "true") {
-//     ensureStarterCache().catch(err => {
-//         console.error("Starter cache initialization failed:", err.message);
-//     });
-// }
 
 app.post("/api/fetch-extra-data", async (req, res) => {
     const { games } = req.body;
